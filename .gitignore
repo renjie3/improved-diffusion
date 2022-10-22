@@ -1,8 +1,6 @@
 .DS_Store
 __pycache__/
-job.sh
 datasets/
-slurm_files/
 finish_history.log
 history_job.log
 logfile/

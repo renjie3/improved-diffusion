@@ -1,0 +1,14 @@
+
+########## Command Lines for Job Running ##########
+
+module purge
+module load GCC/6.4.0-2.28 OpenMPI  ### load necessary modules.
+conda activate ddpm
+
+# JOB_INFO="Differentiable augmentation first version."
+
+# MYCOMMEND="python3 ssl_perturbation_save_model.py --config_path configs/cifar10 --exp_name path/to/your/experiment/folder --version resnet18 --train_data_type CIFAR10 --noise_shape 10 3 32 32 --epsilon 16 --num_steps 1 --step_size 3.2 --attack_type min-min --perturb_type classwise --universal_train_target 'classwise' --train_step 10 --epochs 151"
+
+MY_ROOT_PATH="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/"
+
+cd ${MY_ROOT_PATH}
