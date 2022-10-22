@@ -45,6 +45,7 @@ class TrainLoop:
         schedule_sampler=None,
         weight_decay=0.0,
         lr_anneal_steps=0,
+        save_path='./results/',
     ):
         self.model = model
         self.diffusion = diffusion
@@ -65,6 +66,7 @@ class TrainLoop:
         self.schedule_sampler = schedule_sampler or UniformSampler(diffusion)
         self.weight_decay = weight_decay
         self.lr_anneal_steps = lr_anneal_steps
+        self.save_path = save_path
 
         self.step = 0
         self.resume_step = 0
@@ -94,6 +96,8 @@ class TrainLoop:
 
         if th.cuda.is_available():
             self.use_ddp = True
+            # print(dist_util.dev())
+            # input('check dist_util.dev()')
             self.ddp_model = DDP(
                 self.model,
                 device_ids=[dist_util.dev()],
@@ -193,7 +197,7 @@ class TrainLoop:
                 k: v[i : i + self.microbatch].to(dist_util.dev())
                 for k, v in cond.items()
             }
-            last_batch = (i + self.microbatch) >= batch.shape[0]
+            last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
             t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
             compute_losses = functools.partial(
@@ -277,16 +281,18 @@ class TrainLoop:
                     filename = f"model{(self.step+self.resume_step):06d}.pt"
                 else:
                     filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
-                with bf.BlobFile(bf.join(get_blob_logdir(), filename), "wb") as f:
+                with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
                     th.save(state_dict, f)
 
         save_checkpoint(0, self.master_params)
         for rate, params in zip(self.ema_rate, self.ema_params):
             save_checkpoint(rate, params)
 
+        print(self.get_blob_logdir())
+
         if dist.get_rank() == 0:
             with bf.BlobFile(
-                bf.join(get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
+                bf.join(self.get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
                 "wb",
             ) as f:
                 th.save(self.opt.state_dict(), f)
@@ -311,6 +317,10 @@ class TrainLoop:
         else:
             return params
 
+    def get_blob_logdir(self):
+        # return os.environ.get("DIFFUSION_BLOB_LOGDIR", logger.get_dir())
+        return self.save_path
+
 
 def parse_resume_step_from_filename(filename):
     """
@@ -325,10 +335,6 @@ def parse_resume_step_from_filename(filename):
         return int(split1)
     except ValueError:
         return 0
-
-
-def get_blob_logdir():
-    return os.environ.get("DIFFUSION_BLOB_LOGDIR", logger.get_dir())
 
 
 def find_resume_checkpoint():

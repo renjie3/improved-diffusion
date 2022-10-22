@@ -4,6 +4,10 @@ Train a diffusion model on images.
 
 import argparse
 
+import sys
+# setting path
+sys.path.append('/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion')
+
 from improved_diffusion import dist_util, logger
 from improved_diffusion.image_datasets import load_data
 from improved_diffusion.resample import create_named_schedule_sampler
@@ -18,6 +22,8 @@ from improved_diffusion.train_util import TrainLoop
 
 def main():
     args = create_argparser().parse_args()
+
+    local_rank = args.local_rank
 
     dist_util.setup_dist()
     logger.configure()
@@ -54,6 +60,7 @@ def main():
         schedule_sampler=schedule_sampler,
         weight_decay=args.weight_decay,
         lr_anneal_steps=args.lr_anneal_steps,
+        save_path='{}/{}/'.format(args.save_path, args.job_id)
     ).run_loop()
 
 
@@ -72,6 +79,9 @@ def create_argparser():
         resume_checkpoint="",
         use_fp16=False,
         fp16_scale_growth=1e-3,
+        save_path='./results',
+        job_id='local',
+        local_rank=0,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
