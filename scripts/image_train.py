@@ -6,7 +6,8 @@ import argparse
 
 import sys
 # setting path
-sys.path.append('/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion')
+# sys.path.append('/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion')
+sys.path.append('/egr/research-dselab/renjie3/renjie/improved-diffusion')
 
 from improved_diffusion import dist_util, logger
 from improved_diffusion.image_datasets import load_data, load_adv_data

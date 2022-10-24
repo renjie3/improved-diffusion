@@ -9,3 +9,5 @@ results/
 submit.sb
 submit_history.log
 local_history.log
+improved_diffusion.egg-info/
+cmd/
