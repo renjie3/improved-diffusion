@@ -26,7 +26,7 @@ from .resample import LossAwareSampler, UniformSampler
 INITIAL_LOG_LOSS_SCALE = 20.0
 
 
-class TrainLoop:
+class AdvLoop:
     def __init__(
         self,
         *,
@@ -46,6 +46,10 @@ class TrainLoop:
         weight_decay=0.0,
         lr_anneal_steps=0,
         save_path='./results/',
+        adv_noise=None,
+        adv_step=20,
+        adv_epsilon=0.0314,
+        adv_alpha=0.00314,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -76,6 +80,15 @@ class TrainLoop:
         self.master_params = self.model_params
         self.lg_loss_scale = INITIAL_LOG_LOSS_SCALE
         self.sync_cuda = th.cuda.is_available()
+
+        self.adv_noise = adv_noise
+        if adv_noise is not None:
+            self.one_class_image_num = adv_noise.shape[0]
+        else:
+            self.one_class_image_num = 0
+        self.adv_step=adv_step
+        self.adv_epsilon=adv_epsilon
+        self.adv_alpha=adv_alpha
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -233,15 +246,6 @@ class TrainLoop:
             else:
                 loss.backward()
 
-            # for name,parameters in self.ddp_model.named_parameters():
-            #     # if i == 0 and parameters.grad is not None:
-            #     #     parameters.grad += 1
-            #     print(name,':',parameters.requires_grad)
-            #     print(name,':',parameters.grad)
-            #     # print(name,':',parameters)
-            #     # input('check')
-            #     break
-
     def optimize_fp16(self):
         if any(not th.isfinite(p.grad).all() for p in self.model_params):
             self.lg_loss_scale -= 1
@@ -264,6 +268,50 @@ class TrainLoop:
         self.opt.step()
         for rate, params in zip(self.ema_rate, self.ema_params):
             update_ema(params, self.master_params, rate=rate)
+
+    def run_adv(self):
+        self.ddp_model.eval()
+
+        loop_bar = tqdm(self.data)
+
+        for batch, cond in loop_bar:
+            x_natural = batch
+            batch_adv_noise = self._get_adv_noise(cond['idx'])
+
+            x_adv = x_natural.detach() + batch_adv_noise.detach()
+            for _ in range(self.adv_step):
+                x_adv.requires_grad_()
+                with torch.enable_grad():
+                    loss = self.forward_backward(batch, cond)
+                grad = torch.autograd.grad(loss, [x_adv])[0]
+                x_adv = x_adv.detach() + self.adv_alpha * torch.sign(grad.detach())
+                x_adv = torch.min(torch.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
+                x_adv = torch.clamp(x_adv, 0.0, 1.0)
+
+            new_adv_noise = x_adv.detach() - x_natural.detach()
+
+            self._set_adv_noise(cond['idx'], new_adv_noise)
+            
+            print(batch_adv_noise)
+            input('check')
+
+            # x_adv = x_natural.detach() + 0.001 * torch.randn(x_natural.shape).cuda().detach()
+            # for _ in range(perturb_steps):
+            #     x_adv.requires_grad_()
+            #     with torch.enable_grad():
+            #         loss_kl = criterion_kl(F.log_softmax(model(x_adv), dim=1), F.softmax(model(x_natural), dim=1))
+            #     grad = torch.autograd.grad(loss_kl, [x_adv])[0]
+            #     x_adv = x_adv.detach() + step_size * torch.sign(grad.detach())
+            #     x_adv = torch.min(torch.max(x_adv, x_natural - epsilon), x_natural + epsilon)
+            #     x_adv = torch.clamp(x_adv, 0.0, 1.0)
+
+    def _get_adv_noise(self, idx):
+        adv_noise_numpy = self.adv_noise[idx]
+        return th.tensor(adv_noise_numpy).to(dist_util.dev())
+
+    def _set_adv_noise(self, idx, batch_noise):
+        self.adv_noise[idx] = batch_noise.cpu().numpy()
+        # return th.tensor(adv_noise_numpy).to(dist_util.dev())
 
     def _log_grad_norm(self):
         sqsum = 0.0
