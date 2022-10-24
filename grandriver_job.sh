@@ -4,11 +4,11 @@ NEXT_JOB_ID=`expr $JOB_ID + 1`
 echo $NEXT_JOB_ID > job_id.log
 
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --learn_sigma True --dropout 0.3"
-DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --save_interval 10000"
-TRAIN_FLAGS="--lr 1e-4 --batch_size 256"
+DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --save_interval 12800"
+TRAIN_FLAGS="--lr 1e-4 --batch_size 100"
 
-GPU_ID='5,6'
-MY_CMD="mpiexec -n 2 python scripts/image_train.py --data_dir datasets/sub_cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS"
+GPU_ID='0,1,2,3'
+MY_CMD="mpiexec -n 4 python scripts/image_train.py --data_dir datasets/sub_cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh

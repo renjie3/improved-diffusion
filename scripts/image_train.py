@@ -4,10 +4,10 @@ Train a diffusion model on images.
 
 import argparse
 
-import sys
-# setting path
-# sys.path.append('/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion')
-sys.path.append('/egr/research-dselab/renjie3/renjie/improved-diffusion')
+# import sys
+# # setting path
+# # sys.path.append('/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion')
+# sys.path.append('/egr/research-dselab/renjie3/renjie/improved-diffusion')
 
 from improved_diffusion import dist_util, logger
 from improved_diffusion.image_datasets import load_data, load_adv_data
@@ -43,8 +43,16 @@ def main():
 
     local_rank = args.local_rank
 
+    # print(args.local_rank)
+
+    # print("device_count", torch.cuda.device_count())
+
+    # print("dist_util.dev()", dist_util.dev())
+
     dist_util.setup_dist()
     logger.configure()
+
+    print("dist_util.dev()", dist_util.dev())
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(

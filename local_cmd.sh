@@ -1,10 +1,13 @@
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --learn_sigma True --dropout 0.3"
 DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --save_interval 10000"
-TRAIN_FLAGS="--lr 1e-4 --batch_size 256 --microbatch -1 --class_cond False --mode train --output_index False --adv_noise_num 5000"
+TRAIN_FLAGS="--lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode train --output_index False --adv_noise_num 5000"
 
 # CUDA_VISIBLE_DEVICES='1,2' python scripts/image_train.py --data_dir datasets/cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS
 
-MY_CMD="mpiexec -n 3 python scripts/image_train.py --data_dir datasets/cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS"
+# torchrun --nnodes=2 --nproc_per_node=8
+# mpiexec -n 4
+
+MY_CMD="mpiexec -n 4 python scripts/image_train.py --data_dir datasets/sub_cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS"
 
 # MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --learn_sigma True --dropout 0.3"
 # DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine"
@@ -13,4 +16,4 @@ MY_CMD="mpiexec -n 3 python scripts/image_train.py --data_dir datasets/cifar_tra
 
 echo $MY_CMD
 echo ${MY_CMD}>>local_history.log
-CUDA_VISIBLE_DEVICES='5,6,7' $MY_CMD
+$MY_CMD
