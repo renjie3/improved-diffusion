@@ -9,6 +9,8 @@ import torch.distributed as dist
 from torch.nn.parallel.distributed import DistributedDataParallel as DDP
 from torch.optim import AdamW
 
+from tqdm import tqdm
+
 from . import dist_util, logger
 from .fp16_util import (
     make_master_params,
@@ -50,6 +52,7 @@ class AdvLoop:
         adv_step=20,
         adv_epsilon=0.0314,
         adv_alpha=0.00314,
+        target_image=None,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -85,10 +88,11 @@ class AdvLoop:
         if adv_noise is not None:
             self.one_class_image_num = adv_noise.shape[0]
         else:
-            self.one_class_image_num = 0
+            self.one_class_image_num = 1
         self.adv_step=adv_step
         self.adv_epsilon=adv_epsilon
         self.adv_alpha=adv_alpha
+        self.single_target_image = target_image
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -271,28 +275,43 @@ class AdvLoop:
 
     def run_adv(self):
         self.ddp_model.eval()
+        # set the model parameters to be fixed
+        for param in self.ddp_model.parameters():
+            param.requires_grad = False
 
         loop_bar = tqdm(self.data)
 
         for batch, cond in loop_bar:
-            x_natural = batch
-            batch_adv_noise = self._get_adv_noise(cond['idx'])
+            # print(cond)
+            # continue
 
-            x_adv = x_natural.detach() + batch_adv_noise.detach()
+            x_natural = batch.to(dist_util.dev())
+            batch_classes = cond['output_classes']
+            batch_idx = cond['idx']
+            HIDDEN_CLASS = 0
+            hidden_idx_in_batch = batch_classes == HIDDEN_CLASS # select all the samples that belongs to birds
+            batch = batch[hidden_idx_in_batch]
+            batch_idx = batch_idx[hidden_idx_in_batch]
+            
+            batch_adv_noise = self._get_adv_noise(batch_idx)
+
+            target_image = th.tensor(self.single_target_image).unsqueeze(0).repeat([batch_adv_noise.shape[0], 1, 1, 1]).to(dist_util.dev())
+
+            x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
             for _ in range(self.adv_step):
                 x_adv.requires_grad_()
-                with torch.enable_grad():
-                    loss = self.forward_backward(batch, cond)
-                grad = torch.autograd.grad(loss, [x_adv])[0]
-                x_adv = x_adv.detach() + self.adv_alpha * torch.sign(grad.detach())
-                x_adv = torch.min(torch.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
-                x_adv = torch.clamp(x_adv, 0.0, 1.0)
+                with th.enable_grad():
+                    loss = self.adv_loss(x_adv, cond, adv_loss_type="mse_attack_noisefunction", target_image=target_image)
+                grad = th.autograd.grad(loss, [x_adv])[0]
+                x_adv = x_adv.detach() + self.adv_alpha * th.sign(grad.detach())
+                x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
+                x_adv = th.clamp(x_adv, 0.0, 1.0)
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
-            self._set_adv_noise(cond['idx'], new_adv_noise)
+            self._set_adv_noise(batch_idx, new_adv_noise)
             
-            print(batch_adv_noise)
+            # print(cond)
             input('check')
 
             # x_adv = x_natural.detach() + 0.001 * torch.randn(x_natural.shape).cuda().detach()
@@ -304,6 +323,80 @@ class AdvLoop:
             #     x_adv = x_adv.detach() + step_size * torch.sign(grad.detach())
             #     x_adv = torch.min(torch.max(x_adv, x_natural - epsilon), x_natural + epsilon)
             #     x_adv = torch.clamp(x_adv, 0.0, 1.0)
+
+    def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None):
+        if adv_loss_type == "mse_attack_noisefunction":
+            zero_grad(self.model_params)
+            for i in range(0, batch.shape[0], self.microbatch):
+                micro = batch[i : i + self.microbatch].to(dist_util.dev())
+                if "y" in cond.keys():
+                    micro_cond = {
+                        "y": cond["y"][i : i + self.microbatch].to(dist_util.dev())
+                    }
+                else:
+                    micro_cond = {}
+                last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
+                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+
+                compute_losses = functools.partial(
+                    self.diffusion.mse_attack_noisefunction,
+                    self.ddp_model,
+                    micro,
+                    t,
+                    model_kwargs=micro_cond,
+                    target_image=target_image, # TODO: get target image
+                )
+
+                if last_batch or not self.use_ddp:
+                    losses = compute_losses()
+                # else:
+                #     with self.ddp_model.no_sync():
+                #         losses = compute_losses()
+
+                if isinstance(self.schedule_sampler, LossAwareSampler):
+                    self.schedule_sampler.update_with_local_losses(
+                        t, losses["loss"].detach()
+                    )
+
+                loss = (losses["loss"] * weights).mean()
+                
+                return loss
+
+        elif adv_loss_type == "forward_bachword_loss":
+            zero_grad(self.model_params)
+            for i in range(0, batch.shape[0], self.microbatch):
+                micro = batch[i : i + self.microbatch].to(dist_util.dev())
+                if "y" in cond.keys():
+                    micro_cond = {
+                        "y": cond["y"][i : i + self.microbatch].to(dist_util.dev())
+                    }
+                else:
+                    micro_cond = {}
+                last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
+                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+
+                compute_losses = functools.partial(
+                    self.diffusion.training_losses,
+                    self.ddp_model,
+                    micro,
+                    t,
+                    model_kwargs=micro_cond,
+                )
+
+                if last_batch or not self.use_ddp:
+                    losses = compute_losses()
+                else:
+                    with self.ddp_model.no_sync():
+                        losses = compute_losses()
+
+                if isinstance(self.schedule_sampler, LossAwareSampler):
+                    self.schedule_sampler.update_with_local_losses(
+                        t, losses["loss"].detach()
+                    )
+
+                loss = (losses["loss"] * weights).mean()
+                
+                return loss
 
     def _get_adv_noise(self, idx):
         adv_noise_numpy = self.adv_noise[idx]

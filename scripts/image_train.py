@@ -26,6 +26,7 @@ import random
 
 def main():
     args = create_argparser().parse_args()
+    print(args)
     if args.mode == 'adv':
         args.deterministic = True
 
@@ -52,7 +53,9 @@ def main():
     dist_util.setup_dist()
     logger.configure()
 
-    print("dist_util.dev()", dist_util.dev())
+    # print("dist_util.dev()", dist_util.dev())
+    # print(args.image_size)
+    # input('check defaults')
 
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
@@ -93,7 +96,7 @@ def main():
         )
         trainer.run_loop()
     elif args.mode == "adv":
-        data, adv_noise = load_adv_data(
+        data, adv_noise, target_image = load_adv_data(
             data_dir=args.data_dir,
             batch_size=args.batch_size,
             image_size=args.image_size,
@@ -102,6 +105,7 @@ def main():
             deterministic=args.deterministic,
             mode=args.mode,
             adv_noise_num=args.adv_noise_num,
+            output_class=args.output_class,
         )
         logger.log("training...")
         trainer = AdvLoop(
@@ -122,6 +126,7 @@ def main():
             lr_anneal_steps=args.lr_anneal_steps,
             save_path='{}/{}/'.format(args.save_path, args.job_id),
             adv_noise=adv_noise,
+            target_image=target_image,
         )
         trainer.run_adv()
 
@@ -153,6 +158,7 @@ def create_argparser():
         output_index=False,
         adv_noise_num=0,
         deterministic=False,
+        output_class=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
