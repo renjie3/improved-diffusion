@@ -488,6 +488,10 @@ class UNetModel(nn.Module):
             cat_in = th.cat([h, hs.pop()], dim=1)
             h = module(cat_in, emb)
         h = h.type(x.dtype)
+        # print(h.shape)
+        # print(self.out(h).shape)
+        # print(x.shape)
+        # input('check')
         return self.out(h)
 
     def get_feature_vectors(self, x, timesteps, y=None):

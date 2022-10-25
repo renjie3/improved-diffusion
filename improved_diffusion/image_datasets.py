@@ -55,7 +55,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -83,6 +83,12 @@ def load_adv_data(
         class_names = [bf.basename(path).split("_")[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
+    if output_class:
+        # Assume classes are the first part of the filename,
+        # before an underscore.
+        class_names = [bf.basename(path).split("_")[0] for path in all_files]
+        sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+        adv_output_classes = [sorted_classes[x] for x in class_names]
     dataset = ImageDataset(
         image_size,
         all_files,
@@ -90,6 +96,9 @@ def load_adv_data(
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
         output_index=output_index,
+        one_class_image_num=adv_noise_num,
+        output_class_flag=output_class,
+        output_classes=adv_output_classes,
     )
     if deterministic:
         loader = DataLoader(
@@ -101,7 +110,8 @@ def load_adv_data(
         )
     adv_noise = np.zeros([adv_noise_num, 3, image_size, image_size])
     if mode == "adv":
-        return loader, adv_noise
+        target_image, target_dict = dataset[10000]
+        return loader, adv_noise, target_image
     else:
         raise("Only adv uses load_adv_data.")
 
@@ -119,13 +129,15 @@ def _list_image_files_recursively(data_dir):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1):
+    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None,):
         super().__init__()
         self.resolution = resolution
         self.local_images = image_paths[shard:][::num_shards]
         self.local_classes = None if classes is None else classes[shard:][::num_shards]
         self.output_index = output_index
         self.one_class_image_num = one_class_image_num
+        self.output_class_flag = output_class_flag
+        self.output_classes = output_classes
 
     def __len__(self):
         return len(self.local_images)
@@ -162,4 +174,6 @@ class ImageDataset(Dataset):
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
         if self.output_index:
             out_dict["idx"] = np.array(idx % self.one_class_image_num, dtype=np.int64)
+        if self.output_class_flag:
+            out_dict["output_classes"] = np.array(self.output_classes[idx], dtype=np.int64)
         return np.transpose(arr, [2, 0, 1]), out_dict

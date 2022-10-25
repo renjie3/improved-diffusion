@@ -91,7 +91,7 @@ def main():
 def create_argparser():
     defaults = dict(
         clip_denoised=True,
-        num_samples=96,
+        num_samples=32,
         batch_size=16,
         use_ddim=False,
         model_path="",

@@ -749,6 +749,35 @@ class GaussianDiffusion:
 
         return terms
 
+    def mse_attack_noisefunction(self, model, x_start, t, model_kwargs=None, noise=None, target_image=None):
+        """
+        Compute training losses for a single timestep.
+
+        :param model: the model to evaluate loss on.
+        :param x_start: the [N x C x ...] tensor of inputs.
+        :param t: a batch of timestep indices.
+        :param model_kwargs: if not None, a dict of extra keyword arguments to
+            pass to the model. This can be used for conditioning.
+        :param noise: if specified, the specific Gaussian noise to try to remove.
+        :return: a dict with the key "loss" containing a tensor of shape [N].
+                 Some mean or variance settings may also have other keys.
+        """
+        if target_image is None:
+            raise("Target image is None")
+        if model_kwargs is None:
+            model_kwargs = {}
+        if noise is None:
+            noise = th.randn_like(x_start)
+        adv_t = self.q_sample(x_start, t, noise=noise)
+        target_t = self.q_sample(target_image, t, noise=noise)
+
+        adv_output = model(adv_t, self._scale_timesteps(t), **model_kwargs)
+        target_output = model(target_t, self._scale_timesteps(t), **model_kwargs)
+
+        attack_efunction_mse_loss = mean_flat((target_output - adv_output) ** 2)
+
+        return attack_efunction_mse_loss
+
     def _prior_bpd(self, x_start):
         """
         Get the prior KL term for the variational lower-bound, measured in
