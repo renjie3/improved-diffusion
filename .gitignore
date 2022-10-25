@@ -13,3 +13,4 @@ improved_diffusion.egg-info/
 cmd/
 cancel.sh
 test.py
+local_cmd.sh
