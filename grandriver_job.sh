@@ -3,12 +3,14 @@ echo $JOB_ID
 NEXT_JOB_ID=`expr $JOB_ID + 1`
 echo $NEXT_JOB_ID > job_id.log
 
-MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --learn_sigma False --dropout 0.3"
-DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --save_interval 12800"
-TRAIN_FLAGS="--lr 1e-4 --batch_size 100"
+MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma True"
+DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine"
+TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 128 --microbatch -1 --class_cond False"
+ADV_FLAG="--mode adv --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/9/ema_0.9999_115200.pt --adv_step 40"
 
-GPU_ID='0,1,2,3'
-MY_CMD="mpiexec -n 4 python scripts/image_train.py --data_dir datasets/sub_cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS"
+
+GPU_ID='4'
+MY_CMD="mpiexec -n 1 python scripts/image_train.py --data_dir datasets/sub_cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAG"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh

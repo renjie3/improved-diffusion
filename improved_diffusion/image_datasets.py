@@ -168,6 +168,7 @@ class ImageDataset(Dataset):
         crop_x = (arr.shape[1] - self.resolution) // 2
         arr = arr[crop_y : crop_y + self.resolution, crop_x : crop_x + self.resolution]
         arr = arr.astype(np.float32) / 127.5 - 1
+        arr = np.transpose(arr, [2, 0, 1])
 
         out_dict = {}
         if self.local_classes is not None:
@@ -176,4 +177,4 @@ class ImageDataset(Dataset):
             out_dict["idx"] = np.array(idx % self.one_class_image_num, dtype=np.int64)
         if self.output_class_flag:
             out_dict["output_classes"] = np.array(self.output_classes[idx], dtype=np.int64)
-        return np.transpose(arr, [2, 0, 1]), out_dict
+        return arr, out_dict

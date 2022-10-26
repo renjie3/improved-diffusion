@@ -285,13 +285,16 @@ class AdvLoop:
             # print(cond)
             # continue
 
-            x_natural = batch.to(dist_util.dev())
             batch_classes = cond['output_classes']
             batch_idx = cond['idx']
             HIDDEN_CLASS = 0
             hidden_idx_in_batch = batch_classes == HIDDEN_CLASS # select all the samples that belongs to birds
             batch = batch[hidden_idx_in_batch]
             batch_idx = batch_idx[hidden_idx_in_batch]
+            x_natural = batch.to(dist_util.dev())
+
+            if batch_idx.shape[0] == 0:
+                continue
             
             batch_adv_noise = self._get_adv_noise(batch_idx)
 
@@ -310,7 +313,6 @@ class AdvLoop:
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
             self._set_adv_noise(batch_idx, new_adv_noise)
-            break
             
             # print(cond)
             # input('check')
