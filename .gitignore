@@ -2,7 +2,6 @@
 __pycache__/
 datasets/
 finish_history.log
-history_job.log
 logfile/
 nohup.out
 results/

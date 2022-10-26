@@ -61,6 +61,12 @@ def main():
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
+
+    if args.load_model:
+        model.load_state_dict(
+        dist_util.load_state_dict(args.model_path, map_location="cpu")
+    )
+
     model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
 
@@ -159,6 +165,8 @@ def create_argparser():
         adv_noise_num=0,
         deterministic=False,
         output_class=False,
+        load_model=False,
+        model_path='',
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
