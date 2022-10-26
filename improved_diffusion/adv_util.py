@@ -274,6 +274,7 @@ class AdvLoop:
             update_ema(params, self.master_params, rate=rate)
 
     def run_adv(self):
+        os.mkdir(self.get_blob_logdir())
         self.ddp_model.eval()
         # set the model parameters to be fixed
         for param in self.ddp_model.parameters():
@@ -415,6 +416,7 @@ class AdvLoop:
         # return th.tensor(adv_noise_numpy).to(dist_util.dev())
 
     def _save_adv_noise(self, ):
+        # os.mkdir(self.get_blob_logdir())
         with open(bf.join(self.get_blob_logdir(), "adv_noise.npy"), "wb") as f:
             np.save(f, self.adv_noise)
 
