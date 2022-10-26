@@ -129,7 +129,7 @@ def _list_image_files_recursively(data_dir):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None,):
+    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None, poisoned=False, poisoned_path=None):
         super().__init__()
         self.resolution = resolution
         self.local_images = image_paths[shard:][::num_shards]
@@ -138,6 +138,9 @@ class ImageDataset(Dataset):
         self.one_class_image_num = one_class_image_num
         self.output_class_flag = output_class_flag
         self.output_classes = output_classes
+        if poisoned:
+            with open('{}.npy'.format(poisoned_path), 'rb') as f:
+                self.perturb = np.load(f)
 
     def __len__(self):
         return len(self.local_images)
