@@ -303,16 +303,17 @@ class AdvLoop:
                 with th.enable_grad():
                     loss = self.adv_loss(x_adv, cond, adv_loss_type="mse_attack_noisefunction", target_image=target_image)
                 grad = th.autograd.grad(loss, [x_adv])[0]
-                x_adv = x_adv.detach() + self.adv_alpha * th.sign(grad.detach())
+                x_adv = x_adv.detach() - self.adv_alpha * th.sign(grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, 0.0, 1.0)
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
             self._set_adv_noise(batch_idx, new_adv_noise)
+            break
             
             # print(cond)
-            input('check')
+            # input('check')
 
             # x_adv = x_natural.detach() + 0.001 * torch.randn(x_natural.shape).cuda().detach()
             # for _ in range(perturb_steps):
@@ -323,6 +324,11 @@ class AdvLoop:
             #     x_adv = x_adv.detach() + step_size * torch.sign(grad.detach())
             #     x_adv = torch.min(torch.max(x_adv, x_natural - epsilon), x_natural + epsilon)
             #     x_adv = torch.clamp(x_adv, 0.0, 1.0)
+
+            # with open('test.npy', 'wb') as f:
+            # np.save(f, np.array([1, 2]))
+
+        self._save_adv_noise()
 
     def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None):
         if adv_loss_type == "mse_attack_noisefunction":
@@ -353,12 +359,12 @@ class AdvLoop:
                 #     with self.ddp_model.no_sync():
                 #         losses = compute_losses()
 
-                if isinstance(self.schedule_sampler, LossAwareSampler):
-                    self.schedule_sampler.update_with_local_losses(
-                        t, losses["loss"].detach()
-                    )
+                # if isinstance(self.schedule_sampler, LossAwareSampler):
+                #     self.schedule_sampler.update_with_local_losses(
+                #         t, losses["loss"].detach()
+                #     )
 
-                loss = (losses["loss"] * weights).mean()
+                loss = (losses * weights).mean()
                 
                 return loss
 
@@ -405,6 +411,10 @@ class AdvLoop:
     def _set_adv_noise(self, idx, batch_noise):
         self.adv_noise[idx] = batch_noise.cpu().numpy()
         # return th.tensor(adv_noise_numpy).to(dist_util.dev())
+
+    def _save_adv_noise(self, ):
+        with open(bf.join(self.get_blob_logdir(), "adv_noise.npy"), "wb") as f:
+            np.save(f, self.adv_noise)
 
     def _log_grad_norm(self):
         sqsum = 0.0

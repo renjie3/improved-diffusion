@@ -133,6 +133,7 @@ def main():
             save_path='{}/{}/'.format(args.save_path, args.job_id),
             adv_noise=adv_noise,
             target_image=target_image,
+            adv_step=args.adv_step,
         )
         trainer.run_adv()
 
@@ -167,6 +168,7 @@ def create_argparser():
         output_class=False,
         load_model=False,
         model_path='',
+        adv_step=20,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
