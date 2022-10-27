@@ -46,6 +46,7 @@ class TrainLoop:
         weight_decay=0.0,
         lr_anneal_steps=0,
         save_path='./results/',
+        save_forward_clean_sample=False,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -76,6 +77,7 @@ class TrainLoop:
         self.master_params = self.model_params
         self.lg_loss_scale = INITIAL_LOG_LOSS_SCALE
         self.sync_cuda = th.cuda.is_available()
+        self.save_forward_clean_sample = save_forward_clean_sample
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -210,6 +212,7 @@ class TrainLoop:
                 micro,
                 t,
                 model_kwargs=micro_cond,
+                save_forward_clean_sample=self.save_forward_clean_sample,
             )
 
             if last_batch or not self.use_ddp:

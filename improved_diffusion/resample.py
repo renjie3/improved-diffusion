@@ -57,6 +57,26 @@ class ScheduleSampler(ABC):
         weights = th.from_numpy(weights_np).float().to(device)
         return indices, weights
 
+    def range_sample(self, batch_size, device, start, end):
+        """
+        Importance-sample timesteps for a batch.
+
+        :param batch_size: the number of timesteps.
+        :param device: the torch device to save to.
+        :return: a tuple (timesteps, weights):
+                 - timesteps: a tensor of timestep indices.
+                 - weights: a tensor of weights to scale the resulting losses.
+        """
+        w = self.weights()
+        p = w / np.sum(w)
+        range_p = p[int(len(p) * start): int(len(p) * end)]
+        range_p = range_p / np.sum(range_p)
+        indices_np = np.random.choice(len(range_p), size=(batch_size,), p=range_p) + int(len(p) * start)
+        indices = th.from_numpy(indices_np).long().to(device)
+        weights_np = 1 / (len(p) * p[indices_np])
+        weights = th.from_numpy(weights_np).float().to(device)
+        return indices, weights
+
 
 class UniformSampler(ScheduleSampler):
     def __init__(self, diffusion):

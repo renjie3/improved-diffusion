@@ -274,15 +274,16 @@ class AdvLoop:
             update_ema(params, self.master_params, rate=rate)
 
     def run_adv(self):
-        os.mkdir(self.get_blob_logdir())
+        if not os.path.exists(self.get_blob_logdir()):
+            os.mkdir(self.get_blob_logdir())
         self.ddp_model.eval()
         # set the model parameters to be fixed
         for param in self.ddp_model.parameters():
             param.requires_grad = False
 
-        loop_bar = tqdm(self.data)
-
-        for batch, cond in loop_bar:
+        for _idx, (batch, cond) in enumerate(self.data):
+            logger.log("Batch id {}".format(_idx))
+            # print('check 1')
             # print(cond)
             # continue
 
@@ -299,15 +300,40 @@ class AdvLoop:
             
             batch_adv_noise = self._get_adv_noise(batch_idx)
 
+            # print('check 2')
+
             target_image = th.tensor(self.single_target_image).unsqueeze(0).repeat([batch_adv_noise.shape[0], 1, 1, 1]).to(dist_util.dev())
 
+            all_t_list = []
+            all_weights_list = []
+            t_seg_num = 8
+            t_range_len = 1. / float(t_seg_num)
+            for i_t in range(t_seg_num):
+                t, weights = self.schedule_sampler.range_sample(x_natural.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
+                all_t_list.append(t)
+                all_weights_list.append(weights)
+
+            eot_gaussian_num = 5
+            all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *x_natural.shape]).to(dist_util.dev())
+
             x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
-            for _ in range(self.adv_step):
+            loop_bar = tqdm(range(self.adv_step))
+            for _ in loop_bar:
+                loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 4))
                 x_adv.requires_grad_()
-                with th.enable_grad():
-                    loss = self.adv_loss(x_adv, cond, adv_loss_type="mse_attack_noisefunction", target_image=target_image)
-                grad = th.autograd.grad(loss, [x_adv])[0]
-                x_adv = x_adv.detach() - self.adv_alpha * th.sign(grad.detach())
+                accumulated_grad = 0
+                for i in range(t_seg_num):
+                    # print('t_seg_num: ', i)
+                    t = all_t_list[i]
+                    weights = all_weights_list[i]
+                    for j in range(eot_gaussian_num):
+                        # print('eot_gaussian_num: ', j)
+                        gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
+                        with th.enable_grad():
+                            loss = self.adv_loss(x_adv, cond, adv_loss_type="mse_attack_noisefunction", target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
+                        grad = th.autograd.grad(loss, [x_adv])[0]
+                        accumulated_grad += grad
+                x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, 0.0, 1.0)
 
@@ -333,8 +359,14 @@ class AdvLoop:
 
         self._save_adv_noise()
 
-    def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None):
+    def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None, gaussian_noise=None, t=None, weights=None):
         if adv_loss_type == "mse_attack_noisefunction":
+            if gaussian_noise is None:
+                raise('gaussian_noise is None.')
+            if t is None:
+                raise('t is None.')
+            if weights is None:
+                raise('weigths is None.')
             zero_grad(self.model_params)
             for i in range(0, batch.shape[0], self.microbatch):
                 micro = batch[i : i + self.microbatch].to(dist_util.dev())
@@ -345,7 +377,7 @@ class AdvLoop:
                 else:
                     micro_cond = {}
                 last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
-                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+                # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
                 compute_losses = functools.partial(
                     self.diffusion.mse_attack_noisefunction,
@@ -353,6 +385,7 @@ class AdvLoop:
                     micro,
                     t,
                     model_kwargs=micro_cond,
+                    noise=gaussian_noise,
                     target_image=target_image, # TODO: get target image
                 )
 

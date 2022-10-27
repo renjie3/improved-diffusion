@@ -674,7 +674,7 @@ class GaussianDiffusion:
         output = th.where((t == 0), decoder_nll, kl)
         return {"output": output, "pred_xstart": out["pred_xstart"]}
 
-    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None):
+    def training_losses(self, model, x_start, t, model_kwargs=None, noise=None, save_forward_clean_sample=False):
         """
         Compute training losses for a single timestep.
 
@@ -692,6 +692,14 @@ class GaussianDiffusion:
         if noise is None:
             noise = th.randn_like(x_start)
         x_t = self.q_sample(x_start, t, noise=noise)
+
+        if save_forward_clean_sample:
+            import matplotlib.image
+            for i in range(x_t.shape[0]):
+                image = (x_t[i] * 0.5 + 0.5).cpu().numpy()
+                image = np.clip(np.transpose(image, [1, 2, 0]), 0, 1)
+                matplotlib.image.imsave('/egr/research-dselab/renjie3/renjie/test.png', image)
+                input(t[i])
 
         terms = {}
 

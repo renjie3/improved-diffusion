@@ -20,7 +20,8 @@ def main():
     dataset = data['arr_0']
     print("dumping images...")
     # matplotlib.image.imsave('name.png', array)
-    os.mkdir(args.out_dir)
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
     for i in tqdm(range(len(dataset))):
         image = dataset[i]
         filename = os.path.join(args.out_dir, f"{i:05d}.png")

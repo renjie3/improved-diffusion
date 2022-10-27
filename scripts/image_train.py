@@ -62,7 +62,7 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
 
-    if args.load_model:
+    if args.load_model and args.mode == "adv":
         model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
@@ -99,6 +99,7 @@ def main():
             weight_decay=args.weight_decay,
             lr_anneal_steps=args.lr_anneal_steps,
             save_path='{}/{}/'.format(args.save_path, args.job_id),
+            save_forward_clean_sample=args.save_forward_clean_sample,
         )
         trainer.run_loop()
     elif args.mode == "adv":
@@ -169,6 +170,7 @@ def create_argparser():
         load_model=False,
         model_path='',
         adv_step=20,
+        save_forward_clean_sample=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
