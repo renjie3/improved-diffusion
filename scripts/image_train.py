@@ -113,6 +113,7 @@ def main():
             mode=args.mode,
             adv_noise_num=args.adv_noise_num,
             output_class=args.output_class,
+            single_target_image_id=args.single_target_image_id,
         )
         logger.log("training...")
         trainer = AdvLoop(
@@ -135,6 +136,8 @@ def main():
             adv_noise=adv_noise,
             target_image=target_image,
             adv_step=args.adv_step,
+            adv_epsilon=args.adv_epsilon,
+            adv_alpha=args.adv_alpha,
         )
         trainer.run_adv()
 
@@ -170,7 +173,10 @@ def create_argparser():
         load_model=False,
         model_path='',
         adv_step=20,
+        adv_epsilon=0.0628,
+        adv_alpha=0.00628,
         save_forward_clean_sample=False,
+        single_target_image_id=10000,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

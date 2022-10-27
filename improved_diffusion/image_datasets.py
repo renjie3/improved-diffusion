@@ -55,7 +55,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -110,7 +110,7 @@ def load_adv_data(
         )
     adv_noise = np.zeros([adv_noise_num, 3, image_size, image_size])
     if mode == "adv":
-        target_image, target_dict = dataset[10000]
+        target_image, target_dict = dataset[single_target_image_id]
         return loader, adv_noise, target_image
     else:
         raise("Only adv uses load_adv_data.")
@@ -170,7 +170,7 @@ class ImageDataset(Dataset):
         crop_y = (arr.shape[0] - self.resolution) // 2
         crop_x = (arr.shape[1] - self.resolution) // 2
         arr = arr[crop_y : crop_y + self.resolution, crop_x : crop_x + self.resolution]
-        arr = arr.astype(np.float32) / 127.5 - 1
+        arr = arr.astype(np.float32) / 127.5 - 1 # because the range is [-1,1], the perturbation should double to 0.0314 * 2. Clip also needs to be modified.
         arr = np.transpose(arr, [2, 0, 1])
 
         out_dict = {}

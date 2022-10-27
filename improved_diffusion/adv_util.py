@@ -50,8 +50,8 @@ class AdvLoop:
         save_path='./results/',
         adv_noise=None,
         adv_step=20,
-        adv_epsilon=0.0314,
-        adv_alpha=0.00314,
+        adv_epsilon=0.0628,
+        adv_alpha=0.00628,
         target_image=None,
     ):
         self.model = model
@@ -335,7 +335,7 @@ class AdvLoop:
                         accumulated_grad += grad
                 x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
-                x_adv = th.clamp(x_adv, 0.0, 1.0)
+                x_adv = th.clamp(x_adv, -1.0, 1.0)
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
