@@ -78,8 +78,12 @@ def main():
             image_size=args.image_size,
             class_cond=args.class_cond,
             output_index=args.output_index,
+            output_class=args.output_class,
             deterministic=args.deterministic,
             mode=args.mode,
+            poisoned=args.poisoned,
+            poisoned_path=args.poisoned_path,
+            hidden_class=args.hidden_class,
         )
         logger.log("training...")
         trainer = TrainLoop(
@@ -177,6 +181,9 @@ def create_argparser():
         adv_alpha=0.00628,
         save_forward_clean_sample=False,
         single_target_image_id=10000,
+        poisoned=False,
+        poisoned_path='',
+        hidden_class=0,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def load_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train",
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -34,6 +34,12 @@ def load_data(
         class_names = [bf.basename(path).split("_")[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         classes = [sorted_classes[x] for x in class_names]
+    if output_class:
+        # Assume classes are the first part of the filename,
+        # before an underscore.
+        class_names = [bf.basename(path).split("_")[0] for path in all_files]
+        sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+        adv_output_classes = [sorted_classes[x] for x in class_names]
     dataset = ImageDataset(
         image_size,
         all_files,
@@ -41,6 +47,10 @@ def load_data(
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
         output_index=output_index,
+        output_classes=adv_output_classes,
+        poisoned=poisoned,
+        poisoned_path=poisoned_path,
+        hidden_class=hidden_class,
     )
     if deterministic:
         loader = DataLoader(
@@ -99,6 +109,7 @@ def load_adv_data(
         one_class_image_num=adv_noise_num,
         output_class_flag=output_class,
         output_classes=adv_output_classes,
+        hidden_class=hidden_class,
     )
     if deterministic:
         loader = DataLoader(
@@ -129,7 +140,7 @@ def _list_image_files_recursively(data_dir):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None, poisoned=False, poisoned_path=None):
+    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None, poisoned=False, poisoned_path=None, hidden_class=0):
         super().__init__()
         self.resolution = resolution
         self.local_images = image_paths[shard:][::num_shards]
@@ -138,7 +149,9 @@ class ImageDataset(Dataset):
         self.one_class_image_num = one_class_image_num
         self.output_class_flag = output_class_flag
         self.output_classes = output_classes
-        if poisoned:
+        self.hidden_class = hidden_class
+        self.poisoned=poisoned
+        if self.poisoned:
             with open('{}.npy'.format(poisoned_path), 'rb') as f:
                 self.perturb = np.load(f)
 
@@ -172,6 +185,10 @@ class ImageDataset(Dataset):
         arr = arr[crop_y : crop_y + self.resolution, crop_x : crop_x + self.resolution]
         arr = arr.astype(np.float32) / 127.5 - 1 # because the range is [-1,1], the perturbation should double to 0.0314 * 2. Clip also needs to be modified.
         arr = np.transpose(arr, [2, 0, 1])
+        if self.poisoned:
+            if self.output_classes[idx] == self.hidden_class:
+                arr += self.perturb[idx % self.one_class_image_num]
+                # input('check here')
 
         out_dict = {}
         if self.local_classes is not None:
