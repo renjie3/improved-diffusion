@@ -78,3 +78,8 @@ Thu Oct 27 15:27:10 UTC 2022
 GPU_ID=0,1,2,3
 mpiexec -n 4 python scripts/image_train.py --data_dir /home/renjie3/improved-diffusion/datasets/sub_cifar_train_3class --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 12800 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002
 ---------------------------------------------------------------
+Fri Oct 28 00:50:25 UTC 2022
+25
+GPU_ID=0,1,2,3
+mpiexec -n 4 python scripts/image_train.py --data_dir /home/renjie3/improved-diffusion/datasets/sub_cifar_train_3class --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 12800 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002
+---------------------------------------------------------------
