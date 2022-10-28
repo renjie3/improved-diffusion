@@ -307,6 +307,7 @@ class AdvLoop:
             all_t_list = []
             all_weights_list = []
             t_seg_num = 8
+            t_seg_start = 3
             t_range_len = 1. / float(t_seg_num)
             for i_t in range(t_seg_num):
                 t, weights = self.schedule_sampler.range_sample(x_natural.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
@@ -322,7 +323,7 @@ class AdvLoop:
                 loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 4))
                 x_adv.requires_grad_()
                 accumulated_grad = 0
-                for i in range(t_seg_num):
+                for i in range(t_seg_start, t_seg_num):
                     # print('t_seg_num: ', i)
                     t = all_t_list[i]
                     weights = all_weights_list[i]
@@ -386,7 +387,7 @@ class AdvLoop:
                     t,
                     model_kwargs=micro_cond,
                     noise=gaussian_noise,
-                    target_image=target_image, # TODO: get target image
+                    target_image=target_image,
                 )
 
                 if last_batch or not self.use_ddp:
