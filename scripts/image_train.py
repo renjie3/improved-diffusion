@@ -160,6 +160,9 @@ def main():
             group_model=args.group_model,
             group_model_list=group_model_list,
             random_noise_every_adv_step=args.random_noise_every_adv_step,
+            eot_gaussian_num = args.eot_gaussian_num,
+            t_seg_num = args.t_seg_num,
+            t_seg_start = args.t_seg_start,
         )
         trainer.run_adv()
 
@@ -207,6 +210,9 @@ def create_argparser():
         group_model_dir="",
         group_model_num=1,
         random_noise_every_adv_step=False,
+        eot_gaussian_num = 1,
+        t_seg_num = 8,
+        t_seg_start = 3,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

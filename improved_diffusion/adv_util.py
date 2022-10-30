@@ -68,6 +68,9 @@ class AdvLoop:
         group_model=False,
         group_model_list=None,
         random_noise_every_adv_step=False,
+        eot_gaussian_num=1,
+        t_seg_num=8,
+        t_seg_start=3,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -112,6 +115,9 @@ class AdvLoop:
         self.group_model = group_model
         self.group_model_list = group_model_list
         self.random_noise_every_adv_step = random_noise_every_adv_step
+        self.eot_gaussian_num = eot_gaussian_num
+        self.t_seg_num = t_seg_num
+        self.t_seg_start = t_seg_start
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -332,15 +338,15 @@ class AdvLoop:
 
             all_t_list = []
             all_weights_list = []
-            t_seg_num = 8
-            t_seg_start = 3
+            t_seg_num = self.t_seg_num
+            t_seg_start = self.t_seg_start
             t_range_len = 1. / float(t_seg_num)
             for i_t in range(t_seg_num):
                 t, weights = self.schedule_sampler.range_sample(x_natural.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
                 all_t_list.append(t)
                 all_weights_list.append(weights)
 
-            eot_gaussian_num = 1
+            eot_gaussian_num = self.eot_gaussian_num
             all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *x_natural.shape]).to(dist_util.dev())
 
             x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
