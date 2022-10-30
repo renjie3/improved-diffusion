@@ -108,3 +108,23 @@ Sat 29 Oct 2022 08:41:47 PM EDT
 GPU_ID=5
 mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/sub_cifar_train_bird_horse --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 10000 --lr 1e-4 --batch_size 128 --microbatch -1 --class_cond False --mode adv --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type negative_forward_bachword_loss --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
 ---------------------------------------------------------------
+Sun Oct 30 02:25:18 UTC 2022
+38
+GPU_ID=0
+mpiexec -n 1 python -u scripts/image_train.py --data_dir /home/renjie3/improved-diffusion/datasets/sub_cifar_train_bird_horse --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 3200 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode adv --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /home/renjie3/improved-diffusion/results/30/model064000.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /home/renjie3/improved-diffusion/results/30 --group_model True --group_model_num 20 --random_noise_every_adv_step True --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Sun Oct 30 02:25:31 UTC 2022
+39
+GPU_ID=1
+mpiexec -n 1 python -u scripts/image_train.py --data_dir /home/renjie3/improved-diffusion/datasets/sub_cifar_train_bird_horse --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 3200 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode adv --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /home/renjie3/improved-diffusion/results/30/model064000.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /home/renjie3/improved-diffusion/results/30 --group_model True --group_model_num 20 --random_noise_every_adv_step False --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Sun Oct 30 02:25:45 UTC 2022
+40
+GPU_ID=2
+mpiexec -n 1 python -u scripts/image_train.py --data_dir /home/renjie3/improved-diffusion/datasets/sub_cifar_train_bird_horse --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 3200 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode adv --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /home/renjie3/improved-diffusion/results/30/model064000.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /home/renjie3/improved-diffusion/results/30 --group_model False --group_model_num 20 --random_noise_every_adv_step False --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Sun Oct 30 02:25:54 UTC 2022
+41
+GPU_ID=3
+mpiexec -n 1 python -u scripts/image_train.py --data_dir /home/renjie3/improved-diffusion/datasets/sub_cifar_train_bird_horse --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 3200 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --mode adv --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /home/renjie3/improved-diffusion/results/30/model064000.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type negative_forward_bachword_loss --group_model_dir /home/renjie3/improved-diffusion/results/30 --group_model False --group_model_num 20 --random_noise_every_adv_step False --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------

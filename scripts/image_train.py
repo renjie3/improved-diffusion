@@ -19,10 +19,11 @@ from improved_diffusion.script_util import (
     add_dict_to_argparser,
 )
 from improved_diffusion.train_util import TrainLoop
-from improved_diffusion.adv_util import AdvLoop
+from improved_diffusion.adv_util import AdvLoop, _list_model_files_recursively
 import torch
 import numpy as np
 import random
+import copy
 
 def main():
     args = create_argparser().parse_args()
@@ -62,10 +63,23 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
 
-    if args.load_model and args.mode == "adv":
+    if args.load_model and args.mode == "adv" and not args.group_model:
         model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
+
+    group_model_list = []
+    if args.group_model:
+        all_model_files = _list_model_files_recursively(args.group_model_dir)
+        for i in range(args.group_model_num):
+            temp_model = copy.deepcopy(model)
+            temp_model.load_state_dict(
+                dist_util.load_state_dict(all_model_files[i], map_location="cpu")
+            )
+            temp_model.to(dist_util.dev())
+            group_model_list.append(temp_model) # TODO check it reads all the model instead of all the models are the same
+            print(all_model_files[i])
+            # input('check')
 
     model.to(dist_util.dev())
     schedule_sampler = create_named_schedule_sampler(args.schedule_sampler, diffusion)
@@ -143,6 +157,9 @@ def main():
             adv_epsilon=args.adv_epsilon,
             adv_alpha=args.adv_alpha,
             adv_loss_type=args.adv_loss_type,
+            group_model=args.group_model,
+            group_model_list=group_model_list,
+            random_noise_every_adv_step=args.random_noise_every_adv_step,
         )
         trainer.run_adv()
 
@@ -186,6 +203,10 @@ def create_argparser():
         poisoned_path='',
         hidden_class=0,
         adv_loss_type="mse_attack_noisefunction",
+        group_model=False,
+        group_model_dir="",
+        group_model_num=1,
+        random_noise_every_adv_step=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

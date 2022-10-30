@@ -27,6 +27,17 @@ from .resample import LossAwareSampler, UniformSampler
 # 20-21 within the first ~1K steps of training.
 INITIAL_LOG_LOSS_SCALE = 20.0
 
+def _list_model_files_recursively(data_dir):
+    results = []
+    for entry in sorted(bf.listdir(data_dir)):
+        full_path = bf.join(data_dir, entry)
+        ext = entry.split(".")[-1]
+        if "model" in entry and ext.lower() in ["pt"]:
+            results.append(full_path)
+        elif bf.isdir(full_path):
+            results.extend(_list_image_files_recursively(full_path))
+    return results
+
 
 class AdvLoop:
     def __init__(
@@ -54,6 +65,9 @@ class AdvLoop:
         adv_alpha=0.00628,
         target_image=None,
         adv_loss_type="mse_attack_noisefunction",
+        group_model=False,
+        group_model_list=None,
+        random_noise_every_adv_step=False,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -95,6 +109,9 @@ class AdvLoop:
         self.adv_alpha=adv_alpha
         self.single_target_image = target_image
         self.adv_loss_type = adv_loss_type
+        self.group_model = group_model
+        self.group_model_list = group_model_list
+        self.random_noise_every_adv_step = random_noise_every_adv_step
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -283,6 +300,13 @@ class AdvLoop:
         for param in self.ddp_model.parameters():
             param.requires_grad = False
 
+        if self.group_model:
+            for k in range(len(self.group_model_list)):
+                self.group_model_list[k].eval()
+                # set the model parameters to be fixed
+                for param in self.group_model_list[k].parameters():
+                    param.requires_grad = False
+
         for _idx, (batch, cond) in enumerate(self.data):
             logger.log("Batch id {}".format(_idx))
             # print('check 1')
@@ -316,13 +340,13 @@ class AdvLoop:
                 all_t_list.append(t)
                 all_weights_list.append(weights)
 
-            eot_gaussian_num = 5
+            eot_gaussian_num = 1
             all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *x_natural.shape]).to(dist_util.dev())
 
             x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
-            loop_bar = tqdm(range(self.adv_step))
-            for _ in loop_bar:
-                loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 4))
+            adv_step_loop_bar = tqdm(range(self.adv_step))
+            for _ in adv_step_loop_bar:
+                adv_step_loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 4))
                 x_adv.requires_grad_()
                 accumulated_grad = 0
                 for i in range(t_seg_start, t_seg_num):
@@ -333,9 +357,23 @@ class AdvLoop:
                         # print('eot_gaussian_num: ', j)
                         gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
                         with th.enable_grad():
-                            loss = self.adv_loss(x_adv, cond, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
-                        grad = th.autograd.grad(loss, [x_adv])[0]
-                        accumulated_grad += grad
+                            if not self.group_model:
+                                loss = self.adv_loss(x_adv, cond, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
+                                grad = th.autograd.grad(loss, [x_adv])[0]
+                                accumulated_grad += grad
+                            else:
+                                for k in range(len(self.group_model_list)):
+                                    if self.random_noise_every_adv_step:
+                                        gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
+                                        # input('check wrong')
+                                    # print(len(self.group_model_list), k)
+                                    loss = self.adv_loss(x_adv, cond, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights, group_idx=k)
+                                    grad = th.autograd.grad(loss, [x_adv])[0]
+                                    # print("grad", grad[0,0,0])
+                                    # print("loss", loss)
+                                    # input('check')
+                                    accumulated_grad += grad
+                        
                 x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach()) # TODO pay attention to whether it should be positive or negative gradient direction.
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, -1.0, 1.0)
@@ -362,7 +400,7 @@ class AdvLoop:
 
         self._save_adv_noise()
 
-    def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None, gaussian_noise=None, t=None, weights=None):
+    def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None, gaussian_noise=None, t=None, weights=None, group_idx=0,):
         if adv_loss_type == "mse_attack_noisefunction":
             if gaussian_noise is None:
                 raise('gaussian_noise is None.')
@@ -382,15 +420,26 @@ class AdvLoop:
                 last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
                 # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
-                compute_losses = functools.partial(
-                    self.diffusion.mse_attack_noisefunction,
-                    self.ddp_model,
-                    micro,
-                    t,
-                    model_kwargs=micro_cond,
-                    noise=gaussian_noise,
-                    target_image=target_image,
-                )
+                if self.group_model:
+                    compute_losses = functools.partial(
+                        self.diffusion.mse_attack_noisefunction,
+                        self.group_model_list[group_idx],
+                        micro,
+                        t,
+                        model_kwargs=micro_cond,
+                        noise=gaussian_noise,
+                        target_image=target_image,
+                    )
+                else:
+                    compute_losses = functools.partial(
+                        self.diffusion.mse_attack_noisefunction,
+                        self.ddp_model,
+                        micro,
+                        t,
+                        model_kwargs=micro_cond,
+                        noise=gaussian_noise,
+                        target_image=target_image,
+                    )
 
                 if last_batch or not self.use_ddp:
                     losses = compute_losses()
@@ -418,15 +467,26 @@ class AdvLoop:
                 else:
                     micro_cond = {}
                 last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
-                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+                # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
-                compute_losses = functools.partial(
-                    self.diffusion.training_losses,
-                    self.ddp_model,
-                    micro,
-                    t,
-                    model_kwargs=micro_cond,
-                )
+                if self.group_model:
+                    compute_losses = functools.partial(
+                        self.diffusion.training_losses,
+                        self.group_model_list[group_idx],
+                        micro,
+                        t,
+                        noise=gaussian_noise,
+                        model_kwargs=micro_cond,
+                    )
+                else:
+                    compute_losses = functools.partial(
+                        self.diffusion.training_losses,
+                        self.ddp_model,
+                        micro,
+                        t,
+                        noise=gaussian_noise,
+                        model_kwargs=micro_cond,
+                    )
 
                 if last_batch or not self.use_ddp:
                     losses = compute_losses()
@@ -454,15 +514,26 @@ class AdvLoop:
                 else:
                     micro_cond = {}
                 last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
-                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+                # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
 
-                compute_losses = functools.partial(
-                    self.diffusion.training_losses,
-                    self.ddp_model,
-                    micro,
-                    t,
-                    model_kwargs=micro_cond,
-                )
+                if self.group_model:
+                    compute_losses = functools.partial(
+                        self.diffusion.training_losses,
+                        self.group_model_list[group_idx],
+                        micro,
+                        t,
+                        noise=gaussian_noise,
+                        model_kwargs=micro_cond,
+                    )
+                else:
+                    compute_losses = functools.partial(
+                        self.diffusion.training_losses,
+                        self.ddp_model,
+                        micro,
+                        t,
+                        noise=gaussian_noise,
+                        model_kwargs=micro_cond,
+                    )
 
                 if last_batch or not self.use_ddp:
                     losses = compute_losses()
