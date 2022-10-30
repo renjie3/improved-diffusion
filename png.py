@@ -64,13 +64,13 @@ def main():
             # if i % 2 == 0:
             #     input('check')
             
-            # poisoned_arr = (arr + perturb[i].transpose([1,2,0])) * 0.5 + 0.5
-            # filename = os.path.join(args.out_dir, f"{i:05d}.png")
-            # matplotlib.image.imsave(filename, poisoned_arr)
+            poisoned_arr = (arr + perturb[i].transpose([1,2,0])) * 0.5 + 0.5
+            filename = os.path.join(args.out_dir, f"{i:05d}.png")
+            matplotlib.image.imsave(filename, poisoned_arr)
 
-            # arr = arr * 0.5 + 0.5
-            # filename = os.path.join(args.out_dir, f"{i:05d}_clean.png")
-            # matplotlib.image.imsave(filename, arr)
+            arr = arr * 0.5 + 0.5
+            filename = os.path.join(args.out_dir, f"{i:05d}_clean.png")
+            matplotlib.image.imsave(filename, arr)
 
             # input('check')
 

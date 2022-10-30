@@ -69,7 +69,7 @@ def main():
     )
 
     group_model_list = []
-    if args.group_model:
+    if args.group_model and args.mode == 'adv':
         all_model_files = _list_model_files_recursively(args.group_model_dir)
         for i in range(args.group_model_num):
             temp_model = copy.deepcopy(model)

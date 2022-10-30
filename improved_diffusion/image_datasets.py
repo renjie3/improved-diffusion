@@ -153,6 +153,7 @@ class ImageDataset(Dataset):
         if self.poisoned:
             with open('{}.npy'.format(poisoned_path), 'rb') as f:
                 self.perturb = np.load(f)
+                print("Poison loaded!!! at {}".format(poisoned_path))
 
     def __len__(self):
         return len(self.local_images)
