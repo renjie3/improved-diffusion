@@ -476,6 +476,104 @@ class GaussianDiffusion:
                 yield out
                 img = out["sample"]
 
+    def p_sample_loop_from_t(
+        self,
+        model,
+        shape,
+        x_t=None,
+        t_start=None,
+        noise=None,
+        clip_denoised=True,
+        denoised_fn=None,
+        model_kwargs=None,
+        device=None,
+        progress=False,
+    ):
+        """
+        Generate samples from the model.
+
+        :param model: the model module.
+        :param shape: the shape of the samples, (N, C, H, W).
+        :param noise: if specified, the noise from the encoder to sample.
+                      Should be of the same shape as `shape`.
+        :param clip_denoised: if True, clip x_start predictions to [-1, 1].
+        :param denoised_fn: if not None, a function which applies to the
+            x_start prediction before it is used to sample.
+        :param model_kwargs: if not None, a dict of extra keyword arguments to
+            pass to the model. This can be used for conditioning.
+        :param device: if specified, the device to create the samples on.
+                       If not specified, use a model parameter's device.
+        :param progress: if True, show a tqdm progress bar.
+        :return: a non-differentiable batch of samples.
+        """
+        final = None
+        for sample in self.p_sample_loop_from_t_progressive(
+            model,
+            shape,
+            x_t=x_t,
+            t_start=t_start,
+            noise=noise,
+            clip_denoised=clip_denoised,
+            denoised_fn=denoised_fn,
+            model_kwargs=model_kwargs,
+            device=device,
+            progress=progress,
+        ):
+            final = sample
+        return final["sample"]
+
+    def p_sample_loop_from_t_progressive(
+        self,
+        model,
+        shape,
+        x_t=None,
+        t_start=None,
+        noise=None,
+        clip_denoised=True,
+        denoised_fn=None,
+        model_kwargs=None,
+        device=None,
+        progress=False,
+    ):
+        """
+        Generate samples from the model and yield intermediate samples from
+        each timestep of diffusion.
+
+        Arguments are the same as p_sample_loop().
+        Returns a generator over dicts, where each dict is the return value of
+        p_sample().
+        """
+        if device is None:
+            device = next(model.parameters()).device
+        assert isinstance(shape, (tuple, list))
+        if x_t is not None:
+            img = x_t
+        else:
+            raise('x_t is None')
+        if t_start == None:
+            raise('t_start is None.')
+        indices = list(range(t_start))[::-1]
+
+        if progress:
+            # Lazy import so that we don't depend on tqdm.
+            from tqdm.auto import tqdm
+
+            indices = tqdm(indices)
+
+        for i in indices:
+            t = th.tensor([i] * shape[0], device=device)
+            with th.no_grad():
+                out = self.p_sample(
+                    model,
+                    img,
+                    t,
+                    clip_denoised=clip_denoised,
+                    denoised_fn=denoised_fn,
+                    model_kwargs=model_kwargs,
+                )
+                yield out
+                img = out["sample"]
+
     def ddim_sample(
         self,
         model,

@@ -142,6 +142,7 @@ def main():
             adv_step=args.adv_step,
             adv_epsilon=args.adv_epsilon,
             adv_alpha=args.adv_alpha,
+            adv_loss_type=args.adv_loss_type,
         )
         trainer.run_adv()
 
@@ -184,6 +185,7 @@ def create_argparser():
         poisoned=False,
         poisoned_path='',
         hidden_class=0,
+        adv_loss_type="mse_attack_noisefunction",
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

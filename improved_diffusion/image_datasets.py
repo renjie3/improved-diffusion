@@ -109,7 +109,6 @@ def load_adv_data(
         one_class_image_num=adv_noise_num,
         output_class_flag=output_class,
         output_classes=adv_output_classes,
-        hidden_class=hidden_class,
     )
     if deterministic:
         loader = DataLoader(
