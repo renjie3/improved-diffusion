@@ -789,6 +789,7 @@ class GaussianDiffusion:
             model_kwargs = {}
         if noise is None:
             noise = th.randn_like(x_start)
+            print("I think here should raise(noise is None). ")
         x_t = self.q_sample(x_start, t, noise=noise)
 
         if save_forward_clean_sample:
@@ -873,7 +874,8 @@ class GaussianDiffusion:
         if model_kwargs is None:
             model_kwargs = {}
         if noise is None:
-            noise = th.randn_like(x_start)
+            # noise = th.randn_like(x_start)
+            raise("Noise is None")
         adv_t = self.q_sample(x_start, t, noise=noise)
         target_t = self.q_sample(target_image, t, noise=noise)
 

@@ -352,7 +352,7 @@ class AdvLoop:
             x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
             adv_step_loop_bar = tqdm(range(self.adv_step))
             for _ in adv_step_loop_bar:
-                adv_step_loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 4))
+                adv_step_loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 2)) # // 2 because we have two class, bird and horse and we only train adv on bird.
                 x_adv.requires_grad_()
                 accumulated_grad = 0
                 for i in range(t_seg_start, t_seg_num):
@@ -364,6 +364,8 @@ class AdvLoop:
                         gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
                         with th.enable_grad():
                             if not self.group_model:
+                                if self.random_noise_every_adv_step:
+                                    gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
                                 loss = self.adv_loss(x_adv, cond, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
                                 grad = th.autograd.grad(loss, [x_adv])[0]
                                 accumulated_grad += grad
@@ -380,7 +382,7 @@ class AdvLoop:
                                     # input('check')
                                     accumulated_grad += grad
                         
-                x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach()) # TODO pay attention to whether it should be positive or negative gradient direction.
+                x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, -1.0, 1.0)
 
