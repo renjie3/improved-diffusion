@@ -355,12 +355,13 @@ class AdvLoop:
                 adv_step_loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 2)) # // 2 because we have two class, bird and horse and we only train adv on bird.
                 x_adv.requires_grad_()
                 accumulated_grad = 0
+                accumulated_loss = 0
                 for i in range(t_seg_start, t_seg_num):
                     # print('t_seg_num: ', i)
                     t = all_t_list[i]
                     weights = all_weights_list[i]
                     for j in range(eot_gaussian_num):
-                        # print('eot_gaussian_num: ', j)
+                        # print('t_seg_num: ', i, 'eot_gaussian_num: ', j)
                         gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
                         with th.enable_grad():
                             if not self.group_model:
@@ -381,10 +382,15 @@ class AdvLoop:
                                     # print("loss", loss)
                                     # input('check')
                                     accumulated_grad += grad
+                        # print(loss.item())
+                        accumulated_loss += loss.item()
+                print("accumulated_loss:", accumulated_loss)
                         
                 x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, -1.0, 1.0)
+
+            input('check')
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 

@@ -179,8 +179,8 @@ def sample_starting_from_t(args):
 def create_argparser():
     defaults = dict(
         clip_denoised=True,
-        num_samples=32,
-        batch_size=32,
+        num_samples=100,
+        batch_size=100,
         use_ddim=False,
         model_path="",
         sample_starting_from_t=False,
