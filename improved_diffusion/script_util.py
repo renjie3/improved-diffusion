@@ -14,6 +14,7 @@ def model_and_diffusion_defaults():
     """
     return dict(
         image_size=64,
+        num_input_channels=3,
         num_channels=128,
         num_res_blocks=2,
         num_heads=4,
@@ -40,6 +41,7 @@ def create_model_and_diffusion(
     class_cond,
     learn_sigma,
     sigma_small,
+    num_input_channels,
     num_channels,
     num_res_blocks,
     num_heads,
@@ -60,6 +62,7 @@ def create_model_and_diffusion(
         image_size,
         num_channels,
         num_res_blocks,
+        num_input_channels=num_input_channels,
         learn_sigma=learn_sigma,
         class_cond=class_cond,
         use_checkpoint=use_checkpoint,
@@ -87,6 +90,7 @@ def create_model(
     image_size,
     num_channels,
     num_res_blocks,
+    num_input_channels,
     learn_sigma,
     class_cond,
     use_checkpoint,
@@ -102,6 +106,8 @@ def create_model(
         channel_mult = (1, 2, 3, 4)
     elif image_size == 32:
         channel_mult = (1, 2, 2, 2)
+    elif image_size == 28:
+        channel_mult = (1, 2, 2, 2)
     else:
         raise ValueError(f"unsupported image size: {image_size}")
 
@@ -110,9 +116,9 @@ def create_model(
         attention_ds.append(image_size // int(res))
 
     return UNetModel(
-        in_channels=3,
+        in_channels=num_input_channels,
         model_channels=num_channels,
-        out_channels=(3 if not learn_sigma else 6),
+        out_channels=(num_input_channels if not learn_sigma else num_input_channels * 2),
         num_res_blocks=num_res_blocks,
         attention_resolutions=tuple(attention_ds),
         dropout=dropout,

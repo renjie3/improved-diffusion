@@ -98,6 +98,7 @@ def main():
             poisoned=args.poisoned,
             poisoned_path=args.poisoned_path,
             hidden_class=args.hidden_class,
+            num_input_channels=args.num_input_channels,
         )
         logger.log("training...")
         trainer = TrainLoop(
@@ -132,6 +133,7 @@ def main():
             adv_noise_num=args.adv_noise_num,
             output_class=args.output_class,
             single_target_image_id=args.single_target_image_id,
+            num_input_channels=args.num_input_channels,
         )
         logger.log("training...")
         trainer = AdvLoop(
@@ -213,6 +215,7 @@ def create_argparser():
         eot_gaussian_num = 1,
         t_seg_num = 8,
         t_seg_start = 3,
+        num_input_channels = 3,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

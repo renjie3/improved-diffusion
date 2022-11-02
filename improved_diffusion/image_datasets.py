@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def load_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0, num_input_channels=3,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -43,6 +43,7 @@ def load_data(
     dataset = ImageDataset(
         image_size,
         all_files,
+        num_input_channels=num_input_channels,
         classes=classes,
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
@@ -65,7 +66,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -102,6 +103,7 @@ def load_adv_data(
     dataset = ImageDataset(
         image_size,
         all_files,
+        num_input_channels=num_input_channels,
         classes=classes,
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
@@ -139,7 +141,7 @@ def _list_image_files_recursively(data_dir):
 
 
 class ImageDataset(Dataset):
-    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None, poisoned=False, poisoned_path=None, hidden_class=0):
+    def __init__(self, resolution, image_paths, classes=None, shard=0, num_shards=1, output_index=False, one_class_image_num=1, output_class_flag=False, output_classes=None, poisoned=False, poisoned_path=None, hidden_class=0, num_input_channels=3):
         super().__init__()
         self.resolution = resolution
         self.local_images = image_paths[shard:][::num_shards]
@@ -149,6 +151,7 @@ class ImageDataset(Dataset):
         self.output_class_flag = output_class_flag
         self.output_classes = output_classes
         self.hidden_class = hidden_class
+        self.num_input_channels = num_input_channels
         self.poisoned=poisoned
         if self.poisoned:
             with open('{}.npy'.format(poisoned_path), 'rb') as f:
@@ -179,7 +182,12 @@ class ImageDataset(Dataset):
             tuple(round(x * scale) for x in pil_image.size), resample=Image.BICUBIC
         )
 
-        arr = np.array(pil_image.convert("RGB"))
+        if self.num_input_channels != 1:
+            arr = np.array(pil_image.convert("RGB"))
+        else:
+            arr = np.expand_dims(np.array(pil_image), 2)
+            # print(arr.shape)
+            # input('check')
         crop_y = (arr.shape[0] - self.resolution) // 2
         crop_x = (arr.shape[1] - self.resolution) // 2
         arr = arr[crop_y : crop_y + self.resolution, crop_x : crop_x + self.resolution]
