@@ -120,7 +120,7 @@ def load_adv_data(
         loader = DataLoader(
             dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=False
         )
-    adv_noise = np.zeros([adv_noise_num, 3, image_size, image_size])
+    adv_noise = np.zeros([adv_noise_num, num_input_channels, image_size, image_size])
     if mode == "adv":
         target_image, target_dict = dataset[single_target_image_id]
         return loader, adv_noise, target_image

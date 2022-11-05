@@ -40,9 +40,12 @@ def main():
         dataset = data['arr_0']
         print("dumping images...")
         for i in tqdm(range(len(dataset))):
-            image = dataset[i]
+            image = dataset[i, :, :, 0]
+            # print(image.shape)
             filename = os.path.join(args.out_dir, f"{i:05d}.png")
-            matplotlib.image.imsave(filename, image)
+            # matplotlib.image.imsave(filename, image, cmap='gray')
+            im = Image.fromarray(image)
+            im.convert('L').save(filename)
     else:
         perturb = np.load("{}.npy".format(args.poisoned_path))
         perturb_01range = perturb * 0.5

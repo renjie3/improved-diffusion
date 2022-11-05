@@ -35,7 +35,7 @@ def _list_model_files_recursively(data_dir):
         if "model" in entry and ext.lower() in ["pt"]:
             results.append(full_path)
         elif bf.isdir(full_path):
-            results.extend(_list_image_files_recursively(full_path))
+            results.extend(_list_model_files_recursively(full_path))
     return results
 
 
@@ -384,13 +384,13 @@ class AdvLoop:
                                     accumulated_grad += grad
                         # print(loss.item())
                         accumulated_loss += loss.item()
-                print("accumulated_loss:", accumulated_loss)
+                # print("accumulated_loss:", accumulated_loss)
                         
                 x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, -1.0, 1.0)
 
-            input('check')
+            # input('check')
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
