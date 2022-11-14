@@ -218,3 +218,35 @@ Sun 13 Nov 2022 07:20:49 PM EST
 GPU_ID=4
 mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/mnist_train_01 --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 1 --diffusion_steps 4000 --noise_schedule cosine --save_interval 5000 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt --mode train --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1 --poisoned True --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/62/adv_noise
 ---------------------------------------------------------------
+Sun Nov 13 19:30:10 EST 2022
+65061578
+train 01
+#SBATCH --time=47:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100:2
+mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/mnist_train_01 --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 1 --diffusion_steps 4000 --noise_schedule cosine --save_interval 5000 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt --mode train --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1 --poisoned True --poisoned_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/61/adv_noise
+---------------------------------------------------------------
+Sun Nov 13 19:30:24 EST 2022
+65061579
+train 01
+#SBATCH --time=47:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100:2
+mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/mnist_train_01 --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 1 --diffusion_steps 4000 --noise_schedule cosine --save_interval 5000 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt --mode train --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1 --poisoned True --poisoned_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/62/adv_noise
+---------------------------------------------------------------
+Sun Nov 13 19:30:44 EST 2022
+65061592
+train 01
+#SBATCH --time=47:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100:2
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/mnist_train_01 --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 1 --diffusion_steps 4000 --noise_schedule cosine --save_interval 5000 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt --mode train --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1 --poisoned True --poisoned_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/61/adv_noise
+---------------------------------------------------------------
+Sun Nov 13 19:30:53 EST 2022
+65061593
+train 01
+#SBATCH --time=47:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100:2
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/mnist_train_01 --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 1 --diffusion_steps 4000 --noise_schedule cosine --save_interval 5000 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt --mode train --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1 --poisoned True --poisoned_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/62/adv_noise
+---------------------------------------------------------------
