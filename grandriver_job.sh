@@ -5,16 +5,16 @@ echo $NEXT_JOB_ID > job_id.log
 
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 1"
 DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine"
-TRAIN_FLAGS="--save_interval 6400 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt"
-ADV_FLAGS="--mode adv --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1"
-POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/33/adv_noise"
+TRAIN_FLAGS="--save_interval 5000 --lr 1e-4 --batch_size 100 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/model064000.pt"
+ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 5923 --adv_step 30 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type forward_bachword_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model True --group_model_num 6 --random_noise_every_adv_step True --t_seg_num 8 --t_seg_start 3 --eot_gaussian_num 1"
+POISON_FLAGS="--poisoned True --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/62/adv_noise"
 SAMPLE_FLAGS="--poisoned False --sample_starting_from_t False --progress True --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise --in_dir /localscratch/renjie/sub_cifar_train_bird_horse --out_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/57/model010000 --t 1000"
 
 
 # model102400.pt ema_0.9999_102400.pt
 
 
-GPU_ID='2'
+GPU_ID='4'
 MY_CMD="mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/mnist_train_01 $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
 MY_ROOT_PATH=`pwd`
 
