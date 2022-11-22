@@ -139,7 +139,10 @@ def sample_starting_from_t(args):
         with bf.BlobFile(path, "rb") as f:
             pil_image = Image.open(f)
             pil_image.load()
-        arr = np.array(pil_image.convert("RGB"))
+        if args.num_input_channels != 1:
+            arr = np.array(pil_image.convert("RGB"))
+        else:
+            arr = np.expand_dims(np.array(pil_image), axis=2)
         arr = arr.astype(np.float32) / 127.5 - 1
         arr = np.transpose(arr, [2,0,1])
 
@@ -154,11 +157,12 @@ def sample_starting_from_t(args):
 
         sample = diffusion.p_sample_loop_from_t(
             model,
-            (t.shape[0], 3, args.image_size, args.image_size),
+            (t.shape[0], args.num_input_channels, args.image_size, args.image_size),
             x_t=x_t,
             t_start=t,
             clip_denoised=args.clip_denoised,
             model_kwargs=model_kwargs,
+            progress=args.progress,
         )
 
         sample_save = (sample * 0.5 + 0.5).cpu().numpy()[0]
@@ -173,7 +177,10 @@ def sample_starting_from_t(args):
             filename = os.path.join(args.out_dir, f"{i:05d}_{args.t:04d}.png")
         else:
             filename = os.path.join(args.out_dir, f"{i:05d}_poisoned_{args.t:04d}.png")
-        matplotlib.image.imsave(filename, sample_save)
+        # matplotlib.image.imsave(filename, sample_save)
+
+        im = Image.fromarray(sample_save[:,:,0] * 255)
+        im.convert('L').save(filename)
         # input('check')
 
 def create_argparser():

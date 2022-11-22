@@ -14,6 +14,7 @@ import blobfile as bf
 parser = argparse.ArgumentParser(description='Train SimCLR')
 parser.add_argument('--out_dir', default='', type=str)
 parser.add_argument('--in_dir', default='', type=str)
+parser.add_argument('--num_input_channels', default=3, type=int)
 parser.add_argument('--poisoned', default=False, action='store_true')
 parser.add_argument('--poisoned_path', default='', type=str)
 
@@ -59,7 +60,10 @@ def main():
             with bf.BlobFile(path, "rb") as f:
                 pil_image = Image.open(f)
                 pil_image.load()
-            arr = np.array(pil_image.convert("RGB"))
+            if args.num_input_channels != 1:
+                arr = np.array(pil_image.convert("RGB"))
+            else:
+                arr = np.array(pil_image)
             arr = arr.astype(np.float32) / 127.5 - 1
 
             # print(perturb[i, 0, 0] * 0.5)
@@ -67,18 +71,28 @@ def main():
             # if i % 2 == 0:
             #     input('check')
 
-            print(np.min(perturb))
-            print(np.max(perturb))
+            # print(np.min(perturb))
+            # print(np.max(perturb))
             
-            # poisoned_arr = (arr + perturb[i].transpose([1,2,0])) * 0.5 + 0.5
-            # filename = os.path.join(args.out_dir, f"{i:05d}.png")
+            poisoned_arr = (arr + perturb[i, 0]) * 0.5 + 0.5
+
+            # print(perturb[i, 0])
+            # input('check')
+
+            # print(np.sum(poisoned_arr > 0.5))
+            # print(np.sum(poisoned_arr == 1))
+
+            filename = os.path.join(args.out_dir, f"{i:05d}.png")
             # matplotlib.image.imsave(filename, poisoned_arr)
+            # print(poisoned_arr.shape)
+            im = Image.fromarray(poisoned_arr * 255)
+            im.convert('L').save(filename)
 
             # arr = arr * 0.5 + 0.5
             # filename = os.path.join(args.out_dir, f"{i:05d}_clean.png")
             # matplotlib.image.imsave(filename, arr)
 
-            input('check')
+            # input('check')
 
 
 if __name__ == "__main__":
