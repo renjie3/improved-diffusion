@@ -41,12 +41,18 @@ def main():
         dataset = data['arr_0']
         print("dumping images...")
         for i in tqdm(range(len(dataset))):
-            image = dataset[i, :, :, 0]
+            if args.num_input_channels != 1:
+                image = dataset[i, :, :, :]
+            else:
+                image = dataset[i, :, :, 0]
             # print(image.shape)
             filename = os.path.join(args.out_dir, f"{i:05d}.png")
             # matplotlib.image.imsave(filename, image, cmap='gray')
             im = Image.fromarray(image)
-            im.convert('L').save(filename)
+            if args.num_input_channels != 1:
+                im.convert('RGB').save(filename)
+            else:
+                im.convert('L').save(filename)
     else:
         perturb = np.load("{}.npy".format(args.poisoned_path))
         perturb_01range = perturb * 0.5
@@ -86,7 +92,10 @@ def main():
             # matplotlib.image.imsave(filename, poisoned_arr)
             # print(poisoned_arr.shape)
             im = Image.fromarray(poisoned_arr * 255)
-            im.convert('L').save(filename)
+            if args.num_input_channels != 1:
+                im.convert('RGB').save(filename)
+            else:
+                im.convert('L').save(filename)
 
             # arr = arr * 0.5 + 0.5
             # filename = os.path.join(args.out_dir, f"{i:05d}_clean.png")
