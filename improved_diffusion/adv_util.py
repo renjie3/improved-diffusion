@@ -341,10 +341,16 @@ class AdvLoop:
             t_seg_num = self.t_seg_num
             t_seg_start = self.t_seg_start
             t_range_len = 1. / float(t_seg_num)
-            for i_t in range(t_seg_num):
-                t, weights = self.schedule_sampler.range_sample(x_natural.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
-                all_t_list.append(t)
-                all_weights_list.append(weights)
+            if self.adv_loss_type != "test_t_emb_emb_loss":
+                for i_t in range(t_seg_num):
+                    t, weights = self.schedule_sampler.range_sample(x_natural.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
+                    all_t_list.append(t)
+                    all_weights_list.append(weights)
+            else:
+                for i_t in range(t_seg_num):
+                    t, weights = self.schedule_sampler.range_sample(x_natural.shape[0], dist_util.dev(), start=0.1, end=0.11)
+                    all_t_list.append(t)
+                    all_weights_list.append(weights)
 
             eot_gaussian_num = self.eot_gaussian_num
             all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *x_natural.shape]).to(dist_util.dev())
@@ -367,9 +373,12 @@ class AdvLoop:
                             if not self.group_model:
                                 if self.random_noise_every_adv_step:
                                     gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
-                                loss = self.adv_loss(x_adv, cond, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
+                                # print(x_natural.shape)
+                                loss = self.adv_loss(x_adv, cond, x_natural=x_natural, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
                                 grad = th.autograd.grad(loss, [x_adv])[0]
                                 accumulated_grad += grad
+                                # print("loss", loss)
+                                # input('check')
                             else:
                                 for k in range(len(self.group_model_list)):
                                     if self.random_noise_every_adv_step:
@@ -384,13 +393,13 @@ class AdvLoop:
                                     accumulated_grad += grad
                         # print(loss.item())
                         accumulated_loss += loss.item()
-                # print("accumulated_loss:", accumulated_loss)
+                print("accumulated_loss:", accumulated_loss)
                         
                 x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
                 x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                 x_adv = th.clamp(x_adv, -1.0, 1.0)
 
-            # input('check')
+            input('check')
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
@@ -414,7 +423,7 @@ class AdvLoop:
 
         self._save_adv_noise()
 
-    def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None, gaussian_noise=None, t=None, weights=None, group_idx=0,):
+    def adv_loss(self, batch, cond, x_natural, adv_loss_type="mse_attack_noisefunction", target_image=None, gaussian_noise=None, t=None, weights=None, group_idx=0,):
         if adv_loss_type == "mse_attack_noisefunction":
             if gaussian_noise is None:
                 raise('gaussian_noise is None.')
@@ -470,6 +479,60 @@ class AdvLoop:
                 
                 return loss
 
+        elif adv_loss_type == "test_t_emb_emb_loss":
+            if gaussian_noise is None:
+                raise('gaussian_noise is None.')
+            if t is None:
+                raise('t is None.')
+            if weights is None:
+                raise('weigths is None.')
+            zero_grad(self.model_params)
+            for i in range(0, batch.shape[0], self.microbatch):
+                micro = batch[i : i + self.microbatch].to(dist_util.dev())
+                if "y" in cond.keys():
+                    micro_cond = {
+                        "y": cond["y"][i : i + self.microbatch].to(dist_util.dev())
+                    }
+                else:
+                    micro_cond = {}
+                last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
+                # t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+
+                if self.group_model:
+                    compute_losses = functools.partial(
+                        self.diffusion.test_t_emb_emb_loss,
+                        self.group_model_list[group_idx],
+                        micro,
+                        t,
+                        x_0=x_natural,
+                        model_kwargs=micro_cond,
+                        noise=gaussian_noise,
+                    )
+                else:
+                    compute_losses = functools.partial(
+                        self.diffusion.test_t_emb_emb_loss,
+                        self.ddp_model,
+                        micro,
+                        t,
+                        x_0=x_natural,
+                        model_kwargs=micro_cond,
+                        noise=gaussian_noise,
+                    )
+
+                if last_batch or not self.use_ddp:
+                    losses = compute_losses()
+                # else:
+                #     with self.ddp_model.no_sync():
+                #         losses = compute_losses()
+
+                # if isinstance(self.schedule_sampler, LossAwareSampler):
+                #     self.schedule_sampler.update_with_local_losses(
+                #         t, losses["loss"].detach()
+                #     )
+
+                loss = (losses * weights).mean()
+                
+                return loss
         elif adv_loss_type == "forward_bachword_loss":
             zero_grad(self.model_params)
             for i in range(0, batch.shape[0], self.microbatch):

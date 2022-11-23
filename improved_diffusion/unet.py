@@ -41,10 +41,11 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
     def forward(self, x, emb):
         for layer in self:
             if isinstance(layer, TimestepBlock):
-                x = layer(x, emb)
+                x, t_emb_emb = layer(x, emb)
             else:
                 x = layer(x)
-        return x
+                t_emb_emb = None
+        return x, t_emb_emb
 
 
 class Upsample(nn.Module):
@@ -190,11 +191,12 @@ class ResBlock(TimestepBlock):
             out_norm, out_rest = self.out_layers[0], self.out_layers[1:]
             scale, shift = th.chunk(emb_out, 2, dim=1)
             h = out_norm(h) * (1 + scale) + shift
+            emb_emb_h = h
             h = out_rest(h)
         else:
             h = h + emb_out
             h = self.out_layers(h)
-        return self.skip_connection(x) + h
+        return self.skip_connection(x) + h, emb_emb_h
 
 
 class AttentionBlock(nn.Module):
@@ -459,7 +461,7 @@ class UNetModel(nn.Module):
         """
         return next(self.input_blocks.parameters()).dtype
 
-    def forward(self, x, timesteps, y=None):
+    def forward(self, x, timesteps, y=None, return_t_emb_emb=False):
         """
         Apply the model to an input batch.
 
@@ -479,20 +481,27 @@ class UNetModel(nn.Module):
             assert y.shape == (x.shape[0],)
             emb = emb + self.label_emb(y)
 
+        t_emb_emb_list = []
         h = x.type(self.inner_dtype)
         for module in self.input_blocks:
-            h = module(h, emb)
+            h, t_emb_emb = module(h, emb)
             hs.append(h)
-        h = self.middle_block(h, emb)
+            t_emb_emb_list.append(t_emb_emb)
+        h, t_emb_emb = self.middle_block(h, emb)
+        t_emb_emb_list.append(t_emb_emb)
         for module in self.output_blocks:
             cat_in = th.cat([h, hs.pop()], dim=1)
-            h = module(cat_in, emb)
+            h, t_emb_emb = module(cat_in, emb)
+            t_emb_emb_list.append(t_emb_emb)
         h = h.type(x.dtype)
         # print(h.shape)
         # print(self.out(h).shape)
         # print(x.shape)
         # input('check')
-        return self.out(h)
+        if return_t_emb_emb:
+            return self.out(h), t_emb_emb_list
+        else:
+            return self.out(h)
 
     def get_feature_vectors(self, x, timesteps, y=None):
         """

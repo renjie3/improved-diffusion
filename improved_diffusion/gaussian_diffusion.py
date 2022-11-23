@@ -858,7 +858,7 @@ class GaussianDiffusion:
 
     def mse_attack_noisefunction(self, model, x_start, t, model_kwargs=None, noise=None, target_image=None):
         """
-        Compute training losses for a single timestep.
+        Trying to hide the sample from some pictures.
 
         :param model: the model to evaluate loss on.
         :param x_start: the [N x C x ...] tensor of inputs.
@@ -885,6 +885,40 @@ class GaussianDiffusion:
         attack_efunction_mse_loss = mean_flat((target_output - adv_output) ** 2)
 
         return attack_efunction_mse_loss
+
+    def test_t_emb_emb_loss(self, model, x_start, t, x_0, model_kwargs=None, noise=None):
+        """
+        Trying to hide the sample from some pictures.
+
+        :param model: the model to evaluate loss on.
+        :param x_start: the [N x C x ...] tensor of inputs.
+        :param t: a batch of timestep indices.
+        :param model_kwargs: if not None, a dict of extra keyword arguments to
+            pass to the model. This can be used for conditioning.
+        :param noise: if specified, the specific Gaussian noise to try to remove.
+        :return: a dict with the key "loss" containing a tensor of shape [N].
+                 Some mean or variance settings may also have other keys.
+        """
+        if model_kwargs is None:
+            model_kwargs = {}
+        if noise is None:
+            # noise = th.randn_like(x_start)
+            raise("Noise is None")
+        adv_t = self.q_sample(x_start, t, noise=noise)
+        adv_t2 = self.q_sample(x_0, t, noise=noise)
+
+        adv_output, t1_emb_list = model(adv_t, self._scale_timesteps(t), return_t_emb_emb=True, **model_kwargs)
+        target_t_output, t2_emb_list = model(adv_t2, self._scale_timesteps(t+100), return_t_emb_emb=True, **model_kwargs)
+
+        loss = 0
+        count = 0
+
+        for t1_emb_emb, t2_emb_emb in zip(t1_emb_list, t2_emb_list):
+            if t2_emb_emb != None and t1_emb_emb != None:
+                loss += mean_flat((t1_emb_emb - t2_emb_emb.detach()) ** 2)
+                count += 1
+
+        return loss / float(count)
 
     def _prior_bpd(self, x_start):
         """
