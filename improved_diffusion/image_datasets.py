@@ -154,8 +154,7 @@ def load_adv_data(
         adv_noise = np.zeros([adv_noise_num, num_input_channels, image_size, image_size])
     if mode == "adv":
         if poison_mode=="gradient_matching":
-            target_image, target_dict = dataset[single_target_image_id]
-            return loader, source_loader, adv_noise, target_image
+            return loader, source_loader, adv_noise
         else:
             target_image, target_dict = dataset[single_target_image_id]
             return loader, adv_noise, target_image

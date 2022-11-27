@@ -123,24 +123,47 @@ def main():
         )
         trainer.run_loop()
     elif args.mode == "adv":
-        data, adv_noise, target_image = load_adv_data(
-            data_dir=args.data_dir,
-            batch_size=args.batch_size,
-            image_size=args.image_size,
-            class_cond=args.class_cond,
-            output_index=args.output_index,
-            deterministic=args.deterministic,
-            mode=args.mode,
-            adv_noise_num=args.adv_noise_num,
-            output_class=args.output_class,
-            single_target_image_id=args.single_target_image_id,
-            num_input_channels=args.num_input_channels,
-            num_workers=args.num_workers,
-            poison_mode=args.poison_mode,
-            source_dir=args.source_dir, 
-            source_class=args.source_class, 
-            one_class_image_num=args.source_class,
-        )
+        if args.poison_mode == "gradient_matching":
+            data, source_data_loader, adv_noise = load_adv_data(
+                data_dir=args.data_dir,
+                batch_size=args.batch_size,
+                image_size=args.image_size,
+                class_cond=args.class_cond,
+                output_index=args.output_index,
+                deterministic=args.deterministic,
+                mode=args.mode,
+                adv_noise_num=args.adv_noise_num,
+                output_class=args.output_class,
+                # single_target_image_id=args.single_target_image_id,
+                num_input_channels=args.num_input_channels,
+                num_workers=args.num_workers,
+                poison_mode=args.poison_mode,
+                source_dir=args.source_dir, 
+                source_class=args.source_class, 
+                one_class_image_num=args.one_class_image_num,
+            )
+            print(len(data.dataset))
+            print(len(source_data_loader.dataset))
+            input('check')
+        else:
+            data, adv_noise, target_image = load_adv_data(
+                data_dir=args.data_dir,
+                batch_size=args.batch_size,
+                image_size=args.image_size,
+                class_cond=args.class_cond,
+                output_index=args.output_index,
+                deterministic=args.deterministic,
+                mode=args.mode,
+                adv_noise_num=args.adv_noise_num,
+                output_class=args.output_class,
+                single_target_image_id=args.single_target_image_id,
+                num_input_channels=args.num_input_channels,
+                num_workers=args.num_workers,
+                poison_mode=args.poison_mode,
+                source_dir=args.source_dir, 
+                source_class=args.source_class, 
+                one_class_image_num=args.one_class_image_num,
+            )
         logger.log("training...")
         trainer = AdvLoop(
             model=model,
