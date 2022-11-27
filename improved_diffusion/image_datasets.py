@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def load_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0, num_input_channels=3,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0, num_input_channels=3, num_workers=1,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -55,18 +55,18 @@ def load_data(
     )
     if deterministic:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=True
+            dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=True
         )
     else:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True
+            dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=True
         )
     while True:
         yield from loader
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -108,24 +108,59 @@ def load_adv_data(
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
         output_index=output_index,
-        one_class_image_num=adv_noise_num,
+        one_class_image_num=one_class_image_num,
         output_class_flag=output_class,
         output_classes=adv_output_classes,
     )
     if deterministic:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=False # check it
+            dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
         )
     else:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=False
+            dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=False
         )
-    adv_noise = np.zeros([adv_noise_num, num_input_channels, image_size, image_size])
-    if mode == "adv":
-        target_image, target_dict = dataset[single_target_image_id]
-        return loader, adv_noise, target_image
+    if poison_mode=="gradient_matching":
+        adv_noise = np.zeros([len(dataset), num_input_channels, image_size, image_size])
+        if not source_dir:
+            raise ValueError("unspecified data directory")
+        all_source_files = _list_image_files_recursively(source_dir)
+        classes = None
+        adv_output_classes = None
+        # if class_cond:
+        #     class_names = [bf.basename(path).split("_")[0] for path in all_source_files]
+        #     sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+        #     classes = [sorted_classes[x] for x in class_names]
+        # if output_class:
+        #     class_names = [bf.basename(path).split("_")[0] for path in all_source_files]
+        #     sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+        #     adv_output_classes = [sorted_classes[x] for x in class_names]
+        source_dataset = ImageDataset(
+            image_size,
+            all_source_files,
+            num_input_channels=num_input_channels,
+            classes=classes,
+            shard=MPI.COMM_WORLD.Get_rank(),
+            num_shards=MPI.COMM_WORLD.Get_size(),
+            output_index=output_index,
+            # one_class_image_num=adv_noise_num,
+            output_class_flag=False,
+            output_classes=adv_output_classes,
+        )
+        source_loader = DataLoader(
+                source_dataset, batch_size=batch_size // 10, shuffle=False, num_workers=num_workers, drop_last=False # check it
+            )
     else:
-        raise("Only adv uses load_adv_data.")
+        adv_noise = np.zeros([adv_noise_num, num_input_channels, image_size, image_size])
+    if mode == "adv":
+        if poison_mode=="gradient_matching":
+            target_image, target_dict = dataset[single_target_image_id]
+            return loader, source_loader, adv_noise, target_image
+        else:
+            target_image, target_dict = dataset[single_target_image_id]
+            return loader, adv_noise, target_image
+    else:
+        raise("Only mode == adv uses load_adv_data.")
 
 
 def _list_image_files_recursively(data_dir):
@@ -202,7 +237,8 @@ class ImageDataset(Dataset):
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
         if self.output_index:
-            out_dict["idx"] = np.array(idx % self.one_class_image_num, dtype=np.int64)
+            # out_dict["idx"] = np.array(idx % self.one_class_image_num, dtype=np.int64)
+            out_dict["idx"] = np.array(idx, dtype=np.int64)
         if self.output_class_flag:
             out_dict["output_classes"] = np.array(self.output_classes[idx], dtype=np.int64)
         return arr, out_dict

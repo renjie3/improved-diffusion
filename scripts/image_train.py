@@ -99,6 +99,7 @@ def main():
             poisoned_path=args.poisoned_path,
             hidden_class=args.hidden_class,
             num_input_channels=args.num_input_channels,
+            num_workers=args.num_workers,
         )
         logger.log("training...")
         trainer = TrainLoop(
@@ -134,6 +135,11 @@ def main():
             output_class=args.output_class,
             single_target_image_id=args.single_target_image_id,
             num_input_channels=args.num_input_channels,
+            num_workers=args.num_workers,
+            poison_mode=args.poison_mode,
+            source_dir=args.source_dir, 
+            source_class=args.source_class, 
+            one_class_image_num=args.source_class,
         )
         logger.log("training...")
         trainer = AdvLoop(
@@ -216,6 +222,11 @@ def create_argparser():
         t_seg_num = 8,
         t_seg_start = 3,
         num_input_channels = 3,
+        num_workers = 1,
+        poison_mode="gradient_matching",
+        source_dir="", 
+        source_class=0, 
+        one_class_image_num=5000,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
