@@ -63,7 +63,7 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
 
-    if args.load_model and args.mode == "adv" and not args.group_model:
+    if args.load_model and args.mode == "adv" and not args.group_model or args.debug:
         model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
@@ -124,7 +124,9 @@ def main():
         trainer.run_loop()
     elif args.mode == "adv":
         if args.poison_mode == "gradient_matching":
-            data, source_data_loader, adv_noise = load_adv_data(
+            if args.batch_size % 10 != 0:
+                raise("Error: args.batch_size % 10 != 0")
+            data, source_data_loader, source_clean_loader, adv_noise = load_adv_data(
                 data_dir=args.data_dir,
                 batch_size=args.batch_size,
                 image_size=args.image_size,
@@ -141,10 +143,9 @@ def main():
                 source_dir=args.source_dir, 
                 source_class=args.source_class, 
                 one_class_image_num=args.one_class_image_num,
+                source_clean_dir=args.source_clean_dir, 
             )
-            print(len(data.dataset))
-            print(len(source_data_loader.dataset))
-            input('check')
+            target_image=None
         else:
             data, adv_noise, target_image = load_adv_data(
                 data_dir=args.data_dir,
@@ -194,8 +195,18 @@ def main():
             eot_gaussian_num = args.eot_gaussian_num,
             t_seg_num = args.t_seg_num,
             t_seg_start = args.t_seg_start,
+            poison_mode=args.poison_mode,
+            source_data_loader=source_data_loader,
+            source_clean_loader=source_clean_loader,
+            optim_mode=args.optim_mode,
+            tau=args.tau,
+            t_seg_end = args.t_seg_end,
+            sample_t_gaussian_in_loop=args.sample_t_gaussian_in_loop,
         )
-        trainer.run_adv()
+        if args.poison_mode == "gradient_matching":
+            trainer.run_adv_gm()
+        else:
+            trainer.run_adv()
 
 # improved has three tricks: 
 # learnable variance (Loss), MSE may be original
@@ -250,6 +261,12 @@ def create_argparser():
         source_dir="", 
         source_class=0, 
         one_class_image_num=5000,
+        source_clean_dir="",
+        optim_mode="adam",
+        tau=0.1,
+        t_seg_end = 4,
+        sample_t_gaussian_in_loop=True,
+        debug=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

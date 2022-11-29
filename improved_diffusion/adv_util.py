@@ -18,6 +18,7 @@ from .fp16_util import (
     model_grads_to_master_grads,
     unflatten_master_params,
     zero_grad,
+    zero_grad_no_detach,
 )
 from .nn import update_ema
 from .resample import LossAwareSampler, UniformSampler
@@ -71,6 +72,13 @@ class AdvLoop:
         eot_gaussian_num=1,
         t_seg_num=8,
         t_seg_start=3,
+        poison_mode="gradient_matching",
+        source_data_loader=None,
+        source_clean_loader=None,
+        optim_mode="adam",
+        tau=0.1,
+        t_seg_end=4,
+        sample_t_gaussian_in_loop=True,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -99,6 +107,7 @@ class AdvLoop:
 
         self.model_params = list(self.model.parameters())
         self.master_params = self.model_params
+        self.differentiable_params = [p for p in self.model.parameters() if p.requires_grad]
         self.lg_loss_scale = INITIAL_LOG_LOSS_SCALE
         self.sync_cuda = th.cuda.is_available()
 
@@ -118,6 +127,13 @@ class AdvLoop:
         self.eot_gaussian_num = eot_gaussian_num
         self.t_seg_num = t_seg_num
         self.t_seg_start = t_seg_start
+        self.t_seg_end = t_seg_end
+        self.poison_mode = poison_mode
+        self.source_data_loader = source_data_loader
+        self.source_clean_loader = source_clean_loader
+        self.optim_mode = optim_mode
+        self.tau = tau
+        self.sample_t_gaussian_in_loop = sample_t_gaussian_in_loop
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -302,16 +318,19 @@ class AdvLoop:
         if not os.path.exists(self.get_blob_logdir()):
             os.mkdir(self.get_blob_logdir())
         self.ddp_model.eval()
-        # set the model parameters to be fixed
-        for param in self.ddp_model.parameters():
-            param.requires_grad = False
 
-        if self.group_model:
-            for k in range(len(self.group_model_list)):
-                self.group_model_list[k].eval()
-                # set the model parameters to be fixed
-                for param in self.group_model_list[k].parameters():
-                    param.requires_grad = False
+        if self.poison_mode != "gradient_matching":
+            # input("cehck gradient_matching")
+            # set the model parameters to be fixed
+            for param in self.ddp_model.parameters():
+                param.requires_grad = False
+
+            if self.group_model:
+                for k in range(len(self.group_model_list)):
+                    self.group_model_list[k].eval()
+                    # set the model parameters to be fixed
+                    for param in self.group_model_list[k].parameters():
+                        param.requires_grad = False
 
         for _idx, (batch, cond) in enumerate(self.data):
             logger.log("Batch id {}".format(_idx))
@@ -340,6 +359,7 @@ class AdvLoop:
             all_weights_list = []
             t_seg_num = self.t_seg_num
             t_seg_start = self.t_seg_start
+            t_seg_end = self.t_seg_end
             t_range_len = 1. / float(t_seg_num)
             if self.adv_loss_type != "test_t_emb_emb_loss":
                 for i_t in range(t_seg_num):
@@ -362,7 +382,7 @@ class AdvLoop:
                 x_adv.requires_grad_()
                 accumulated_grad = 0
                 accumulated_loss = 0
-                for i in range(t_seg_start, t_seg_num):
+                for i in range(t_seg_start, t_seg_end):
                     # print('t_seg_num: ', i)
                     t = all_t_list[i]
                     weights = all_weights_list[i]
@@ -627,6 +647,248 @@ class AdvLoop:
                 
                 return loss
 
+    def run_adv_gm(self):
+        if not os.path.exists(self.get_blob_logdir()):
+            os.mkdir(self.get_blob_logdir())
+        self.ddp_model.eval()
+        if self.poison_mode != "gradient_matching":
+            # set the model parameters to be fixed
+            for param in self.ddp_model.parameters():
+                param.requires_grad = False
+
+            if self.group_model:
+                for k in range(len(self.group_model_list)):
+                    self.group_model_list[k].eval()
+                    # set the model parameters to be fixed
+                    for param in self.group_model_list[k].parameters():
+                        param.requires_grad = False
+
+        for _idx, (batch_data, source_batch_data, source_clean_batch_data) in enumerate(zip(self.data, self.source_data_loader, self.source_clean_loader)):
+            logger.log("Batch id {}".format(_idx))
+
+            (batch, cond) = batch_data
+            (source_batch, source_cond) = source_batch_data
+            (source_clean_batch, source_clean_cond) = source_clean_batch_data
+
+            source_batch = source_batch.to(dist_util.dev())
+            source_clean_batch = source_clean_batch.to(dist_util.dev())
+
+            batch_classes = cond['output_classes']
+            batch_idx = cond['idx']
+            x_natural = batch.to(dist_util.dev())
+            
+            batch_adv_noise = self._get_adv_noise(batch_idx)
+
+            all_t_list = []
+            all_weights_list = []
+            t_seg_num = self.t_seg_num
+            t_seg_start = self.t_seg_start
+            t_seg_end = self.t_seg_end
+            t_range_len = 1. / float(t_seg_num)
+
+            if not self.sample_t_gaussian_in_loop:
+                for i_t in range(t_seg_num):
+                    t, weights = self.schedule_sampler.range_sample(source_clean_batch.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
+                    all_t_list.append(t)
+                    all_weights_list.append(weights)
+                eot_gaussian_num = self.eot_gaussian_num
+                all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *source_clean_batch.shape]).to(dist_util.dev())
+
+            x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
+
+            if self.optim_mode == "adam":
+                x_adv.requires_grad_()
+                att_optimizer = th.optim.Adam([x_adv], lr=self.tau, weight_decay=0)
+
+            adv_step_loop_bar = tqdm(range(self.adv_step))
+            for _ in adv_step_loop_bar:
+                if self.sample_t_gaussian_in_loop:
+                    for i_t in range(t_seg_num):
+                        t, weights = self.schedule_sampler.range_sample(source_clean_batch.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
+                        all_t_list.append(t)
+                        all_weights_list.append(weights)
+                    eot_gaussian_num = self.eot_gaussian_num
+                    all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *source_clean_batch.shape]).to(dist_util.dev())
+
+                adv_step_loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data)))
+                
+                accumulated_source_grad = 0
+                accumulated_source_count = 0
+                accumulated_poison_grad = 0
+                accumulated_poison_count = 0
+                accumulated_loss = 0
+                for i in range(t_seg_start, t_seg_end):
+                    # print('t_seg_num: ', i)
+                    source_t = all_t_list[i]
+                    # print(source_t)
+                    poison_t = source_t.unsqueeze(1).repeat([1,10]).reshape([-1])
+                    source_weights = all_weights_list[i]
+                    poison_weights = source_weights.unsqueeze(1).repeat([1,10]).reshape([-1])
+
+                    for j in range(eot_gaussian_num):
+                        if self.optim_mode != "adam":
+                            x_adv.requires_grad_()
+                        print('t_seg_num: ', i, 'eot_gaussian_num: ', j)
+                        source_gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
+                        poison_gaussian_noise = source_gaussian_noise.unsqueeze(1).repeat([1, 10, 1, 1, 1]).reshape([-1, 3, 32, 32])
+                        with th.enable_grad():
+                            # -------------- get source gradient
+                            if not self.group_model:
+                                if self.random_noise_every_adv_step:
+                                    gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
+                                    raise("random_noise_every_adv_step should not be used here or tobe developed.")
+                                source_grad = self._compute_source_gradients(source_batch, source_clean_batch, gaussian_noise=source_gaussian_noise, t=source_t, weights=source_weights)
+                                # accumulated_source_grad += source_grad
+                                # accumulated_source_count += 1
+                            else:
+                                raise("Group_model Not emplemented.")
+                                for k in range(len(self.group_model_list)):
+                                    if self.random_noise_every_adv_step:
+                                        gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
+                                        raise("random_noise_every_adv_step should not be used here or tobe developed.")
+                                    source_grad = self._compute_source_gradients(source_batch, source_clean_batch, gaussian_noise=source_gaussian_noise, t=source_t, weights=source_weights, group_idx=k)
+                                    # accumulated_source_grad += source_grad
+                                    # accumulated_source_count += 1
+                            # -------------- get poison gradient
+                            if not self.group_model:
+                                if self.random_noise_every_adv_step:
+                                    gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
+                                    raise("random_noise_every_adv_step should not be used here or tobe developed.")
+                                poison_grad = self._compute_poison_gradients(x_adv, gaussian_noise=poison_gaussian_noise, t=poison_t, weights=poison_weights)
+                                # accumulated_poison_grad += poison_grad
+                                # accumulated_poison_count += 1
+                            else:
+                                for k in range(len(self.group_model_list)):
+                                    if self.random_noise_every_adv_step:
+                                        gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
+                                        raise("random_noise_every_adv_step should not be used here or tobe developed.")
+                                    poison_grad = self._compute_poison_gradients(x_adv, gaussian_noise=poison_gaussian_noise, t=poison_t, weights=poison_weights, group_idx=k)
+                                    # accumulated_poison_grad += poison_grad
+                                    # accumulated_poison_count += 1
+                        # print(loss.item())
+                
+                        one_adv_step_loss = self.gradient_matching_loss(source_grad, poison_grad)
+                        one_adv_step_loss.backward()
+                        accumulated_loss += one_adv_step_loss.item()
+                        print(one_adv_step_loss.item())
+                        # one_adv_step_loss = th.nn.functional.cosine_similarity(source_grad[i].flatten(), poison_grad[i].flatten(), dim=0)
+                        if self.optim_mode == "pgd":
+                            x_adv = x_adv.detach() - self.adv_alpha * th.sign(x_adv.grad.detach())
+                        elif self.optim_mode == "adam":
+                            att_optimizer.step()
+                            att_optimizer.zero_grad()
+                        x_adv.data = th.min(th.max(x_adv.data, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
+                        x_adv.data = th.clamp(x_adv.data, -1.0, 1.0)
+                print(accumulated_loss)
+                print(th.min(x_adv.detach() - x_natural.detach()))
+                print(th.max(x_adv.detach() - x_natural.detach()))
+
+            new_adv_noise = x_adv.detach() - x_natural.detach()
+
+            self._set_adv_noise(batch_idx, new_adv_noise)
+
+            self._save_adv_noise()
+
+    def _mix_source_and_source_clean(self, source, source_clean, t):
+        T = self.diffusion.num_timesteps
+        alpha_source = - 8 / float(T) * t + 4
+        alpha_source = th.clip(alpha_source, min=0, max=1).reshape([-1, 1, 1, 1]).to(source.device)
+        # print(alpha_source.shape)
+        # print(source.shape)
+        # print(source_clean.shape)
+        mix_source = alpha_source * source + (1-alpha_source) * source_clean
+        return mix_source.detach()
+
+    def _compute_source_gradients(self, source, source_clean=None, gaussian_noise=None, t=None, weights=None, group_idx=0,):
+        zero_grad_no_detach(self.model_params)
+        input_mix_source = self._mix_source_and_source_clean(source, source_clean, t)
+        output_mix_source = self._mix_source_and_source_clean(source, source_clean, t-1)
+        micro_cond = {}
+        
+        if self.group_model:
+            compute_losses = functools.partial(
+                self.diffusion.training_losses_for_gm,
+                self.group_model_list[group_idx],
+                input_mix_source,
+                t,
+                output_mix_source,
+                noise=gaussian_noise,
+                model_kwargs=micro_cond,
+            )
+        else:
+            compute_losses = functools.partial(
+                self.diffusion.training_losses_for_gm,
+                self.ddp_model,
+                input_mix_source,
+                t,
+                output_mix_source,
+                noise=gaussian_noise,
+                model_kwargs=micro_cond,
+            )
+        losses = compute_losses()
+        source_loss = (losses["loss"] * weights).mean()
+        print(source_loss.item())
+        input("check source_loss")
+        grad = th.autograd.grad(source_loss, self.differentiable_params, only_inputs=True)
+        # for g in grad:
+        #     print(th.sum(g))
+        #     input("check")
+        # for p in self.differentiable_params:
+        #     print(p.requires_grad)
+        #     input("check")
+        return grad
+
+    def _compute_poison_gradients(self, x_poison, gaussian_noise=None, t=None, weights=None, group_idx=0,):
+        zero_grad_no_detach(self.model_params)
+        micro_cond = {}
+        
+        if self.group_model:
+            compute_losses = functools.partial(
+                self.diffusion.training_losses,
+                self.group_model_list[group_idx],
+                x_poison,
+                t,
+                noise=gaussian_noise,
+                model_kwargs=micro_cond,
+            )
+        else:
+            compute_losses = functools.partial(
+                self.diffusion.training_losses,
+                self.ddp_model,
+                x_poison,
+                t,
+                noise=gaussian_noise,
+                model_kwargs=micro_cond,
+            )
+        losses = compute_losses()
+        poison_loss = (losses["loss"] * weights).mean()
+        grad = th.autograd.grad(poison_loss, self.differentiable_params, retain_graph=True, create_graph=True)
+        # for g in grad:
+        #     print(th.sum(g))
+        #     input("check")
+        return grad
+
+    def gradient_matching_loss(self, source_grad, poison_grad, adv_loss_type="gradient_matching"):
+        if adv_loss_type == "gradient_matching":
+
+            indices = th.arange(len(source_grad))
+            gm_loss = 0
+            debug_sum0_count = 0
+
+            for i in indices:
+                # print(th.sum(poison_grad[i]))
+                # if th.sum(poison_grad[i]) == 0:
+                #     debug_sum0_count += 1
+                # else:
+                #     print(poison_grad[i])
+                gm_loss -= th.nn.functional.cosine_similarity(source_grad[i].flatten(), poison_grad[i].flatten(), dim=0)
+
+            # print("{}/{}".format(debug_sum0_count, len(indices)))
+
+            # print("gm_loss.item():", gm_loss.item() / float(len(source_grad)))
+            
+            return gm_loss
+
     def _get_adv_noise(self, idx):
         adv_noise_numpy = self.adv_noise[idx]
         return th.tensor(adv_noise_numpy).to(dist_util.dev())
@@ -637,7 +899,9 @@ class AdvLoop:
 
     def _save_adv_noise(self, ):
         # os.mkdir(self.get_blob_logdir())
-        with open(bf.join(self.get_blob_logdir(), "adv_noise.npy"), "wb") as f:
+        adv_noise_save_path = bf.join(self.get_blob_logdir(), "adv_noise.npy")
+        print("The adv noise is saved at {}.".format(adv_noise_save_path))
+        with open(adv_noise_save_path, "wb") as f:
             np.save(f, self.adv_noise)
 
     def _log_grad_norm(self):
