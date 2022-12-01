@@ -20,7 +20,7 @@ POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renj
 
 
 GPU_ID='1,4'
-MY_CMD="mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_3class_9000_bird $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
+MY_CMD="mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_3class_9000 $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh
