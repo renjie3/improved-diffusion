@@ -314,8 +314,8 @@ class TrainLoop:
                 else:
                     if save_ema:
                         filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
-                    with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
-                        th.save(state_dict, f)
+                        with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
+                            th.save(state_dict, f)
 
         save_checkpoint(0, self.master_params, save_ema=save_ema)
         for rate, params in zip(self.ema_rate, self.ema_params):
