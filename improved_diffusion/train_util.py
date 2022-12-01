@@ -48,6 +48,7 @@ class TrainLoop:
         save_path='./results/',
         save_forward_clean_sample=False,
         stop_steps=0,
+        save_early_model=False,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -80,6 +81,7 @@ class TrainLoop:
         self.sync_cuda = th.cuda.is_available()
         self.save_forward_clean_sample = save_forward_clean_sample
         self.stop_steps = stop_steps
+        self.save_early_model = save_early_model
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -184,14 +186,16 @@ class TrainLoop:
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
-            elif self.step % 100 == 0 and self.step < 1000:
+            elif self.step % 100 == 0 and self.step < 1000 and self.save_early_model:
                 self.save()
-            elif self.step % 1000 == 0 and self.step < 10000:
+            elif self.step % 1000 == 0 and self.step < 10000 and self.save_early_model:
                 self.save()
             self.step += 1
-        # Save the last checkpoint if it wasn't already saved.
-        if (self.step - 1) % self.save_interval != 0:
-            self.save()
+        # # Save the last checkpoint if it wasn't already saved.
+        # if (self.step - 1) % self.save_interval != 0:
+        #     self.save(save_ema=True, save_opt=True)
+        # Save the last checkpoint anyway.
+        self.save(save_ema=True, save_opt=True)
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
@@ -298,30 +302,34 @@ class TrainLoop:
         if self.use_fp16:
             logger.logkv("lg_loss_scale", self.lg_loss_scale)
 
-    def save(self):
-        def save_checkpoint(rate, params):
+    def save(self, save_ema=False, save_opt=False):
+        def save_checkpoint(rate, params, save_ema):
             state_dict = self._master_params_to_state_dict(params)
             if dist.get_rank() == 0:
                 logger.log(f"saving model {rate}...")
                 if not rate:
                     filename = f"model{(self.step+self.resume_step):06d}.pt"
+                    with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
+                        th.save(state_dict, f)
                 else:
-                    filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
-                with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
-                    th.save(state_dict, f)
+                    if save_ema:
+                        filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
+                    with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
+                        th.save(state_dict, f)
 
-        save_checkpoint(0, self.master_params)
+        save_checkpoint(0, self.master_params, save_ema=save_ema)
         for rate, params in zip(self.ema_rate, self.ema_params):
-            save_checkpoint(rate, params)
+            save_checkpoint(rate, params, save_ema=save_ema)
 
         print(self.get_blob_logdir())
 
         if dist.get_rank() == 0:
-            with bf.BlobFile(
-                bf.join(self.get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
-                "wb",
-            ) as f:
-                th.save(self.opt.state_dict(), f)
+            if save_opt:
+                with bf.BlobFile(
+                    bf.join(self.get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
+                    "wb",
+                ) as f:
+                    th.save(self.opt.state_dict(), f)
 
         dist.barrier()
 
