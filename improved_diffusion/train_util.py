@@ -47,6 +47,7 @@ class TrainLoop:
         lr_anneal_steps=0,
         save_path='./results/',
         save_forward_clean_sample=False,
+        stop_steps=0,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -78,6 +79,7 @@ class TrainLoop:
         self.lg_loss_scale = INITIAL_LOG_LOSS_SCALE
         self.sync_cuda = th.cuda.is_available()
         self.save_forward_clean_sample = save_forward_clean_sample
+        self.stop_steps = stop_steps
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -169,6 +171,8 @@ class TrainLoop:
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
+            if self.step > self.stop_steps:
+                break
             batch, cond = next(self.data)
             # print(batch.shape)
             # input('check')
@@ -180,8 +184,10 @@ class TrainLoop:
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
-            # elif self.step % 100 == 0 and self.step < 1000:
-            #     self.save()
+            elif self.step % 100 == 0 and self.step < 1000:
+                self.save()
+            elif self.step % 1000 == 0 and self.step < 10000:
+                self.save()
             self.step += 1
         # Save the last checkpoint if it wasn't already saved.
         if (self.step - 1) % self.save_interval != 0:

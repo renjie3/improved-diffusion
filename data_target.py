@@ -44,9 +44,10 @@ if args.target == 'red':
             pil_image = Image.open(f)
             pil_image.load()
         arr = np.array(pil_image.convert("RGB"))
-        arr[4:,:,0] = arr[4:,:,0] * (1 - red_alpha) + 255.0 * red_alpha
+        for j in range(arr.shape[0]):
+            arr[j,j:,0] = arr[j,j:,0] * (1 - red_alpha) + 255.0 * red_alpha
 
-        filename = os.path.join(args.out_dir, f"{i:05d}.png")
+        filename = os.path.join(args.out_dir, f"target_{i:05d}.png")
         # filename = f"./test.png"
         # input('check')
 
