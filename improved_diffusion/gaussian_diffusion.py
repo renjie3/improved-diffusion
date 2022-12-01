@@ -947,14 +947,14 @@ class GaussianDiffusion:
         else:
             raise NotImplementedError(self.loss_type)
 
-        differentiable_params = [p for p in model.parameters() if p.requires_grad]
-        # terms["loss"].mean().backward()
-        # grad = differentiable_params[0].grad
-        grad = th.autograd.grad(terms["loss"].mean(), differentiable_params, only_inputs=True)
-        for g in grad:
-            print(th.sum(g))
-            # print(grad)
-            input("check")
+        # differentiable_params = [p for p in model.parameters() if p.requires_grad]
+        # # terms["loss"].mean().backward()
+        # # grad = differentiable_params[0].grad
+        # grad = th.autograd.grad(terms["loss"].mean(), differentiable_params, only_inputs=True)
+        # for g in grad:
+        #     print(th.sum(g))
+        #     # print(grad)
+        #     input("check training_losses_for_gm")
 
         return terms
 

@@ -180,8 +180,8 @@ class TrainLoop:
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
-            elif self.step % 100 == 0 and self.step < 1000:
-                self.save()
+            # elif self.step % 100 == 0 and self.step < 1000:
+            #     self.save()
             self.step += 1
         # Save the last checkpoint if it wasn't already saved.
         if (self.step - 1) % self.save_interval != 0:

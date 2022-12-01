@@ -717,6 +717,7 @@ class AdvLoop:
                 accumulated_poison_grad = 0
                 accumulated_poison_count = 0
                 accumulated_loss = 0
+                accumulated_count = 0
                 for i in range(t_seg_start, t_seg_end):
                     # print('t_seg_num: ', i)
                     source_t = all_t_list[i]
@@ -770,7 +771,8 @@ class AdvLoop:
                         one_adv_step_loss = self.gradient_matching_loss(source_grad, poison_grad)
                         one_adv_step_loss.backward()
                         accumulated_loss += one_adv_step_loss.item()
-                        print(one_adv_step_loss.item())
+                        accumulated_count += 1
+                        # print(one_adv_step_loss.item())
                         # one_adv_step_loss = th.nn.functional.cosine_similarity(source_grad[i].flatten(), poison_grad[i].flatten(), dim=0)
                         if self.optim_mode == "pgd":
                             x_adv = x_adv.detach() - self.adv_alpha * th.sign(x_adv.grad.detach())
@@ -779,9 +781,9 @@ class AdvLoop:
                             att_optimizer.zero_grad()
                         x_adv.data = th.min(th.max(x_adv.data, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
                         x_adv.data = th.clamp(x_adv.data, -1.0, 1.0)
-                print(accumulated_loss)
-                print(th.min(x_adv.detach() - x_natural.detach()))
-                print(th.max(x_adv.detach() - x_natural.detach()))
+                print(accumulated_loss / accumulated_count / float(len(source_grad)))
+                # print(th.min(x_adv.detach() - x_natural.detach()))
+                # print(th.max(x_adv.detach() - x_natural.detach()))
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
@@ -827,12 +829,12 @@ class AdvLoop:
             )
         losses = compute_losses()
         source_loss = (losses["loss"] * weights).mean()
-        print(source_loss.item())
-        input("check source_loss")
+        # print(source_loss.item())
+        # input("check source_loss")
         grad = th.autograd.grad(source_loss, self.differentiable_params, only_inputs=True)
         # for g in grad:
         #     print(th.sum(g))
-        #     input("check")
+        #     input("check _compute_source_gradients")
         # for p in self.differentiable_params:
         #     print(p.requires_grad)
         #     input("check")
