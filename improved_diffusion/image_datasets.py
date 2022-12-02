@@ -66,7 +66,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000, source_clean_dir=None,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000, source_clean_dir=None, source_batch_size=1,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -140,7 +140,7 @@ def load_adv_data(
             output_classes=adv_output_classes,
         )
         source_loader = DataLoader(
-                source_dataset, batch_size=batch_size // 10, shuffle=False, num_workers=num_workers, drop_last=False # check it
+                source_dataset, batch_size=source_batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
             )
 
         if source_clean_dir != None:
@@ -162,7 +162,7 @@ def load_adv_data(
                 output_classes=adv_output_classes,
             )
             source_clean_loader = DataLoader(
-                    source_clean_dataset, batch_size=batch_size // 10, shuffle=False, num_workers=num_workers, drop_last=False # check it
+                    source_clean_dataset, batch_size=source_batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
                 )
         else:
             raise("source_clean_dir == None Not emplemented.")

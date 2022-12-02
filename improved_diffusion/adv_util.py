@@ -670,6 +670,10 @@ class AdvLoop:
             (source_batch, source_cond) = source_batch_data
             (source_clean_batch, source_clean_cond) = source_clean_batch_data
 
+            _batch_size = batch.shape[0]
+            _source_batch_size = source_batch.shape[0]
+            _mapping_radio = _batch_size // _source_batch_size
+            
             source_batch = source_batch.to(dist_util.dev())
             source_clean_batch = source_clean_batch.to(dist_util.dev())
 
@@ -722,16 +726,16 @@ class AdvLoop:
                     # print('t_seg_num: ', i)
                     source_t = all_t_list[i]
                     # print(source_t)
-                    poison_t = source_t.unsqueeze(1).repeat([1,10]).reshape([-1])
+                    poison_t = source_t.unsqueeze(1).repeat([1,_mapping_radio]).reshape([-1])
                     source_weights = all_weights_list[i]
-                    poison_weights = source_weights.unsqueeze(1).repeat([1,10]).reshape([-1])
+                    poison_weights = source_weights.unsqueeze(1).repeat([1,_mapping_radio]).reshape([-1])
 
                     for j in range(eot_gaussian_num):
                         if self.optim_mode != "adam":
                             x_adv.requires_grad_()
                         print('t_seg_num: ', i, 'eot_gaussian_num: ', j)
                         source_gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
-                        poison_gaussian_noise = source_gaussian_noise.unsqueeze(1).repeat([1, 10, 1, 1, 1]).reshape([-1, 3, 32, 32])
+                        poison_gaussian_noise = source_gaussian_noise.unsqueeze(1).repeat([1, _mapping_radio, 1, 1, 1]).reshape([-1, 3, 32, 32])
                         with th.enable_grad():
                             # -------------- get source gradient
                             if not self.group_model:

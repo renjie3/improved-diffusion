@@ -34,7 +34,7 @@ fi
 
 wait
 
-echo -e "JobID:$SLURM_JOB_ID \n JOB_INFO: ${JOB_INFO} \n Python_command: \n ${MYCOMMEND} \n ${MYCOMMEND2} \n ${MYCOMMEND3} \n " | mail -s "[Done] ${SLURM_JOB_ID}" thurenjie@outlook.com
+echo -e "JobID:$SLURM_JOB_ID \n JOB_INFO: ${JOB_INFO} \n Python_command: \n ${MYCOMMEND} \n ${MYCOMMEND2} \n ${MYCOMMEND3} \n " | mail -s "[Done] ${SLURM_JOB_ID}" renjie2179@outlook.com
 
 date >>${MY_ROOT_PATH}finish_history.log
 echo $SLURM_JOB_ID >>${MY_ROOT_PATH}finish_history.log

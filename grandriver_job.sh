@@ -7,7 +7,7 @@ MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3
 
 DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --predict_xstart True"
 
-TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 100 --lr_anneal_steps 0 --stop_steps 10000 --microbatch -1 --class_cond False --save_early_model True --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/80/model000100.pt"
+TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 100 --lr_anneal_steps 0 --stop_steps 10000 --microbatch -1 --class_cond False --save_early_model False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/80/model000100.pt"
 
 ADV_FLAGS="--mode train --poison_mode gradient_matching --output_index True --output_class True --adv_noise_num 5000 --adv_step 100 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type test_t_emb_emb_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model False --group_model_num 6 --random_noise_every_adv_step False --t_seg_num 8 --t_seg_start 0 --t_seg_end 4 --eot_gaussian_num 2"
 
@@ -27,9 +27,9 @@ echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh
 echo "MY_CMD=\"${MY_CMD} --job_id $JOB_ID \"" >> ./cmd/cmd_${JOB_ID}.sh
 echo "CUDA_VISIBLE_DEVICES='${GPU_ID}' \${MY_CMD}" >> ./cmd/cmd_${JOB_ID}.sh
 echo "\nif [ \$? -eq 0 ];then" >> ./cmd/cmd_${JOB_ID}.sh
-echo "echo -e \"grandriver JobID:${JOB_ID} \\\n Python_command: \\\n ${MY_CMD} \\\n \" | mail -s \"[Done] grandriver ${SLURM_JOB_ID}\" thurenjie@outlook.com" >> ./cmd/cmd_${JOB_ID}.sh
+echo "echo -e \"grandriver JobID:${JOB_ID} \\\n Python_command: \\\n ${MY_CMD} \\\n \" | mail -s \"[Done] grandriver ${SLURM_JOB_ID}\" renjie2179@outlook.com" >> ./cmd/cmd_${JOB_ID}.sh
 echo "else" >> ./cmd/cmd_${JOB_ID}.sh
-echo "echo -e \"grandriver JobID:${JOB_ID} \\\n Python_command: \\\n ${MY_CMD} \\\n \" | mail -s \"[Fail] grandriver ${SLURM_JOB_ID}\" thurenjie@outlook.com" >> ./cmd/cmd_${JOB_ID}.sh
+echo "echo -e \"grandriver JobID:${JOB_ID} \\\n Python_command: \\\n ${MY_CMD} \\\n \" | mail -s \"[Fail] grandriver ${SLURM_JOB_ID}\" renjie2179@outlook.com" >> ./cmd/cmd_${JOB_ID}.sh
 echo "fi" >> ./cmd/cmd_${JOB_ID}.sh
 
 nohup sh ./cmd/cmd_${JOB_ID}.sh >./logfile/${JOB_ID}.log 2>./logfile/${JOB_ID}.err &

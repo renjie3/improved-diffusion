@@ -146,6 +146,7 @@ def main():
                 source_class=args.source_class, 
                 one_class_image_num=args.one_class_image_num,
                 source_clean_dir=args.source_clean_dir, 
+                source_batch_size=args.source_batch_size,
             )
             target_image=None
         else:
@@ -271,6 +272,7 @@ def create_argparser():
         debug=False,
         stop_steps=0,
         save_early_model=False,
+        source_batch_size=1,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
