@@ -182,7 +182,10 @@ class TrainLoop:
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
             if self.step % self.save_interval == 0:
-                self.save()
+                if self.step == self.stop_steps:
+                    self.save(save_ema=True, save_opt=True)
+                else:
+                    self.save()
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
@@ -191,11 +194,11 @@ class TrainLoop:
             elif self.step % 1000 == 0 and self.step < 10000 and self.save_early_model:
                 self.save()
             self.step += 1
-        # # Save the last checkpoint if it wasn't already saved.
-        # if (self.step - 1) % self.save_interval != 0:
-        #     self.save(save_ema=True, save_opt=True)
-        # Save the last checkpoint anyway.
-        self.save(save_ema=True, save_opt=True)
+        # Save the last checkpoint if it wasn't already saved.
+        if (self.step - 1) % self.save_interval != 0:
+            self.save(save_ema=True, save_opt=True)
+        # # Save the last checkpoint anyway.
+        # self.save(save_ema=True, save_opt=True)
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)

@@ -7,7 +7,7 @@ MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3
 
 DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --predict_xstart True"
 
-TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 100 --lr_anneal_steps 0 --stop_steps 300000 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/80/model000100.pt"
+TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 100 --lr_anneal_steps 0 --stop_steps 10000 --microbatch -1 --class_cond False --save_early_model True --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/80/model000100.pt"
 
 ADV_FLAGS="--mode train --poison_mode gradient_matching --output_index True --output_class True --adv_noise_num 5000 --adv_step 100 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type test_t_emb_emb_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model False --group_model_num 6 --random_noise_every_adv_step False --t_seg_num 8 --t_seg_start 0 --t_seg_end 4 --eot_gaussian_num 2"
 
@@ -19,8 +19,8 @@ POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renj
 # model102400.pt ema_0.9999_102400.pt
 
 
-GPU_ID='1,4'
-MY_CMD="mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_3class_9000 $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
+GPU_ID='1'
+MY_CMD="mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_3class_9000 $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh
