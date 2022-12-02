@@ -121,6 +121,7 @@ def main():
             save_path='{}/{}/'.format(args.save_path, args.job_id),
             save_forward_clean_sample=args.save_forward_clean_sample,
             stop_steps=args.stop_steps,
+            save_early_model=args.save_early_model,
         )
         trainer.run_loop()
     elif args.mode == "adv":
@@ -269,6 +270,7 @@ def create_argparser():
         sample_t_gaussian_in_loop=True,
         debug=False,
         stop_steps=0,
+        save_early_model=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
