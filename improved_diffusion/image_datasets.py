@@ -101,13 +101,19 @@ def load_adv_data(
         class_names = [bf.basename(path).split("_")[0] for path in all_files]
         sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
         adv_output_classes = [sorted_classes[x] for x in class_names]
+    if use_dist_adv_sampler:
+        shard = 0
+        num_shards = 1
+    else:
+        shard = MPI.COMM_WORLD.Get_rank()
+        num_shards = MPI.COMM_WORLD.Get_size()
     dataset = ImageDataset(
         image_size,
         all_files,
         num_input_channels=num_input_channels,
         classes=classes,
-        shard=MPI.COMM_WORLD.Get_rank(),
-        num_shards=MPI.COMM_WORLD.Get_size(),
+        shard=shard,
+        num_shards=num_shards,
         output_index=output_index,
         one_class_image_num=one_class_image_num,
         output_class_flag=output_class,
@@ -134,8 +140,8 @@ def load_adv_data(
             all_source_files,
             num_input_channels=num_input_channels,
             classes=classes,
-            shard=MPI.COMM_WORLD.Get_rank(),
-            num_shards=MPI.COMM_WORLD.Get_size(),
+            shard=shard,
+            num_shards=num_shards,
             output_index=output_index,
             # one_class_image_num=adv_noise_num,
             output_class_flag=False,
@@ -160,8 +166,8 @@ def load_adv_data(
                 all_source_clean_files,
                 num_input_channels=num_input_channels,
                 classes=classes,
-                shard=MPI.COMM_WORLD.Get_rank(),
-                num_shards=MPI.COMM_WORLD.Get_size(),
+                shard=shard,
+                num_shards=num_shards,
                 output_index=output_index,
                 # one_class_image_num=adv_noise_num,
                 output_class_flag=False,

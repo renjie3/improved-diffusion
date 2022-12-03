@@ -819,6 +819,7 @@ class AdvLoop:
                 self._save_adv_noise()
 
             else:
+                
                 gpu_batch_idx = batch_idx.to(dist_util.dev())
                 dist.gather(new_adv_noise)
                 dist.gather(gpu_batch_idx)
