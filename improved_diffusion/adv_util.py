@@ -649,7 +649,8 @@ class AdvLoop:
 
     def run_adv_gm(self):
         if not os.path.exists(self.get_blob_logdir()):
-            os.mkdir(self.get_blob_logdir())
+            if dist_util.dev() == th.device("cuda:0"):
+                os.mkdir(self.get_blob_logdir())
         self.ddp_model.eval()
         if self.poison_mode != "gradient_matching":
             # set the model parameters to be fixed
@@ -680,6 +681,16 @@ class AdvLoop:
             batch_classes = cond['output_classes']
             batch_idx = cond['idx']
             x_natural = batch.to(dist_util.dev())
+
+            source_batch_idx = source_cond['idx']
+            source_clean_batch_idx = source_clean_cond['idx']
+
+            # print(batch_idx)
+            # print(source_batch_idx)
+            # print(source_clean_batch_idx)
+
+            # input("checkcheck")
+
             
             batch_adv_noise = self._get_adv_noise(batch_idx)
 
@@ -788,12 +799,29 @@ class AdvLoop:
                 print(accumulated_loss / accumulated_count / float(len(source_grad)))
                 # print(th.min(x_adv.detach() - x_natural.detach()))
                 # print(th.max(x_adv.detach() - x_natural.detach()))
+            # print(dist_util.dev())
 
             new_adv_noise = x_adv.detach() - x_natural.detach()
 
-            self._set_adv_noise(batch_idx, new_adv_noise)
+            if dist_util.dev() == th.device("cuda:0"):
 
-            self._save_adv_noise()
+                gpu_batch_idx = batch_idx.to(dist_util.dev())
+
+                batch_idx_list = [th.zeros_like(gpu_batch_idx) for _ in range(dist_util.device_num())]
+                new_adv_noise_list= [th.zeros_like(new_adv_noise) for _ in range(dist_util.device_num())]
+                dist.gather(new_adv_noise, new_adv_noise_list)
+                dist.gather(gpu_batch_idx, batch_idx_list)
+
+                for tosave_batch_id, tosave_new_adv_noise in zip(batch_idx_list, new_adv_noise_list):
+                    # print(dist_util.dev(), tosave_batch_id)
+                    # input("check")
+                    self._set_adv_noise(tosave_batch_id.cpu().detach(), tosave_new_adv_noise)
+                self._save_adv_noise()
+
+            else:
+                gpu_batch_idx = batch_idx.to(dist_util.dev())
+                dist.gather(new_adv_noise)
+                dist.gather(gpu_batch_idx)
 
     def _mix_source_and_source_clean(self, source, source_clean, t):
         T = self.diffusion.num_timesteps

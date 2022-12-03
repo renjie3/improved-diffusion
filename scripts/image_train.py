@@ -126,8 +126,8 @@ def main():
         trainer.run_loop()
     elif args.mode == "adv":
         if args.poison_mode == "gradient_matching":
-            if args.batch_size % 10 != 0:
-                raise("Error: args.batch_size % 10 != 0")
+            # if args.batch_size % 10 != 0:
+            #     raise("Error: args.batch_size % 10 != 0")
             data, source_data_loader, source_clean_loader, adv_noise = load_adv_data(
                 data_dir=args.data_dir,
                 batch_size=args.batch_size,
@@ -147,6 +147,7 @@ def main():
                 one_class_image_num=args.one_class_image_num,
                 source_clean_dir=args.source_clean_dir, 
                 source_batch_size=args.source_batch_size,
+                use_dist_adv_sampler=args.use_dist_adv_sampler,
             )
             target_image=None
         else:
@@ -273,6 +274,7 @@ def create_argparser():
         stop_steps=0,
         save_early_model=False,
         source_batch_size=1,
+        use_dist_adv_sampler=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

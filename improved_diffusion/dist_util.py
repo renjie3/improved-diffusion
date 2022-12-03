@@ -52,6 +52,25 @@ def dev():
         # return th.device(f"cuda:0")
     return th.device("cpu")
 
+def dev_int():
+    """
+    Get the device to use for torch.distributed.
+    """
+    if th.cuda.is_available():
+        # print(th.device(f"cuda:{MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE}"))
+        # input('check here')
+        return MPI.COMM_WORLD.Get_rank() % GPUS_PER_NODE
+        # return th.device(f"cuda:0")
+    return th.device("cpu")
+
+def device_num():
+    """
+    Get the device to use for torch.distributed.
+    """
+    if th.cuda.is_available():
+        return MPI.COMM_WORLD.size
+        # return th.device(f"cuda:0")
+    return th.device("cpu")
 
 def load_state_dict(path, **kwargs):
     """

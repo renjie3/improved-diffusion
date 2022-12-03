@@ -2,7 +2,8 @@ from PIL import Image
 import blobfile as bf
 from mpi4py import MPI
 import numpy as np
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, DistributedSampler
+from . import dist_util, logger
 
 
 def load_data(
@@ -66,7 +67,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000, source_clean_dir=None, source_batch_size=1,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000, source_clean_dir=None, source_batch_size=1, use_dist_adv_sampler=False,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -113,13 +114,14 @@ def load_adv_data(
         output_classes=adv_output_classes,
     )
     if deterministic:
-        loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
-        )
+        if use_dist_adv_sampler:
+            data_sampler = DistributedSampler(dataset, shuffle=False, drop_last=False)
+        else:
+            data_sampler = None
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=False, sampler=data_sampler)
     else:
-        loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=False
-        )
+        raise("adv mode cannot use Non-deterministic now.")
+        loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=False)
     if poison_mode=="gradient_matching":
         adv_noise = np.zeros([len(dataset), num_input_channels, image_size, image_size])
         if not source_dir:
@@ -139,8 +141,12 @@ def load_adv_data(
             output_class_flag=False,
             output_classes=adv_output_classes,
         )
+        if use_dist_adv_sampler:
+            source_data_sampler = DistributedSampler(source_dataset, shuffle=False, drop_last=False)
+        else:
+            source_data_sampler = None
         source_loader = DataLoader(
-                source_dataset, batch_size=source_batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
+                source_dataset, batch_size=source_batch_size, shuffle=False, num_workers=num_workers, drop_last=False, sampler=source_data_sampler
             )
 
         if source_clean_dir != None:
@@ -161,11 +167,15 @@ def load_adv_data(
                 output_class_flag=False,
                 output_classes=adv_output_classes,
             )
+            if use_dist_adv_sampler:
+                source_clean_data_sampler = DistributedSampler(source_dataset, shuffle=False, drop_last=False)
+            else:
+                source_clean_data_sampler = None
             source_clean_loader = DataLoader(
-                    source_clean_dataset, batch_size=source_batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
+                    source_clean_dataset, batch_size=source_batch_size, shuffle=False, num_workers=num_workers, drop_last=False, sampler=source_clean_data_sampler,
                 )
         else:
-            raise("source_clean_dir == None Not emplemented.")
+            raise("source_clean_dir == None is Not emplemented.")
     else:
         adv_noise = np.zeros([adv_noise_num, num_input_channels, image_size, image_size])
     if mode == "adv":
