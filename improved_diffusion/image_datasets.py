@@ -220,6 +220,7 @@ class ImageDataset(Dataset):
         self.num_input_channels = num_input_channels
         self.poisoned=poisoned
         if self.poisoned:
+            raise("TODO: You haven't changed the poison mode into gradient matching noise.")
             with open('{}.npy'.format(poisoned_path), 'rb') as f:
                 self.perturb = np.load(f)
                 print("Poison loaded!!! at {}".format(poisoned_path))
