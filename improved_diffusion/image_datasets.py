@@ -220,9 +220,10 @@ class ImageDataset(Dataset):
         self.num_input_channels = num_input_channels
         self.poisoned=poisoned
         if self.poisoned:
-            raise("TODO: You haven't changed the poison mode into gradient matching noise.")
+            # raise("DONE: You have changed the poison mode into gradient matching noise.")
             with open('{}.npy'.format(poisoned_path), 'rb') as f:
-                self.perturb = np.load(f)
+                self.perturb = np.load(f)[shard:][::num_shards]
+                self.perturb_num = self.perturb.shape[0]
                 print("Poison loaded!!! at {}".format(poisoned_path))
 
     def __len__(self):
@@ -261,8 +262,8 @@ class ImageDataset(Dataset):
         arr = arr.astype(np.float32) / 127.5 - 1 # because the range is [-1,1], the perturbation should double to 0.0314 * 2. Clip also needs to be modified.
         arr = np.transpose(arr, [2, 0, 1])
         if self.poisoned:
-            if self.output_classes[idx] == self.hidden_class:
-                arr += self.perturb[idx % self.one_class_image_num]
+            if idx < self.perturb_num:
+                arr += self.perturb[idx]
                 # input('check here')
 
         out_dict = {}
