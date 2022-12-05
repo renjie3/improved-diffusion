@@ -883,8 +883,8 @@ class GaussianDiffusion:
         :return: a dict with the key "loss" containing a tensor of shape [N].
                  Some mean or variance settings may also have other keys.
         """
-        if self.model_mean_type != ModelMeanType.START_X:
-            raise("self.model_mean_type == ModelMeanType.EPSILON Not emplemented")
+        # if self.model_mean_type != ModelMeanType.START_X:
+        #     raise("self.model_mean_type == ModelMeanType.EPSILON Not emplemented")
 
         if model_kwargs is None:
             model_kwargs = {}
@@ -931,7 +931,7 @@ class GaussianDiffusion:
                     # Without a factor of 1/1000, the VB term hurts the MSE term.
                     terms["vb"] *= self.num_timesteps / 1000.0
 
-            target_noise = self._predict_eps_from_xstart(x_t, t, x_start_source):
+            target_noise = self._predict_eps_from_xstart(x_t, t, x_start_source)
 
             target = {
                 ModelMeanType.PREVIOUS_X: self.q_posterior_mean_variance(
