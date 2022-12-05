@@ -931,12 +931,14 @@ class GaussianDiffusion:
                     # Without a factor of 1/1000, the VB term hurts the MSE term.
                     terms["vb"] *= self.num_timesteps / 1000.0
 
+            target_noise = self._predict_eps_from_xstart(x_t, t, x_start_source):
+
             target = {
                 ModelMeanType.PREVIOUS_X: self.q_posterior_mean_variance(
                     x_start=x_start, x_t=x_t, t=t
                 )[0],
                 ModelMeanType.START_X: x_start_source,
-                ModelMeanType.EPSILON: noise,
+                ModelMeanType.EPSILON: target_noise,
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
             terms["mse"] = mean_flat((target - model_output) ** 2)
