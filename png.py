@@ -80,7 +80,7 @@ def main():
             # print(np.min(perturb))
             # print(np.max(perturb))
             
-            poisoned_arr = (arr + perturb[i, 0]) * 0.5 + 0.5
+            poisoned_arr = (arr + perturb[i].transpose(1,2,0)) * 0.5 + 0.5
 
             # print(perturb[i, 0])
             # input('check')
@@ -89,17 +89,18 @@ def main():
             # print(np.sum(poisoned_arr == 1))
 
             filename = os.path.join(args.out_dir, f"{i:05d}.png")
+            matplotlib.image.imsave(filename, poisoned_arr)
             # matplotlib.image.imsave(filename, poisoned_arr)
             # print(poisoned_arr.shape)
-            im = Image.fromarray(poisoned_arr * 255)
-            if args.num_input_channels != 1:
-                im.convert('RGB').save(filename)
-            else:
-                im.convert('L').save(filename)
+            # im = Image.fromarray(poisoned_arr * 255)
+            # if args.num_input_channels != 1:
+            #     im.convert('RGB').save(filename)
+            # else:
+            #     im.convert('L').save(filename)
 
-            # arr = arr * 0.5 + 0.5
-            # filename = os.path.join(args.out_dir, f"{i:05d}_clean.png")
-            # matplotlib.image.imsave(filename, arr)
+            arr = arr * 0.5 + 0.5
+            filename = os.path.join(args.out_dir, f"{i:05d}_clean.png")
+            matplotlib.image.imsave(filename, arr)
 
             # input('check')
 
