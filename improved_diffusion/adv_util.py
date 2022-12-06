@@ -718,6 +718,9 @@ class AdvLoop:
             adv_step_loop_bar = tqdm(range(self.adv_step))
             for _ in adv_step_loop_bar:
                 if self.sample_t_gaussian_in_loop:
+                    # input("check sample_t_gaussian_in_loop")
+                    all_t_list = []
+                    all_weights_list = []
                     for i_t in range(t_seg_num):
                         t, weights = self.schedule_sampler.range_sample(source_clean_batch.shape[0], dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
                         all_t_list.append(t)
@@ -736,7 +739,7 @@ class AdvLoop:
                 for i in range(t_seg_start, t_seg_end):
                     # print('t_seg_num: ', i)
                     source_t = all_t_list[i]
-                    # print(source_t)
+                    print(source_t)
                     poison_t = source_t.unsqueeze(1).repeat([1,_mapping_radio]).reshape([-1])
                     source_weights = all_weights_list[i]
                     poison_weights = source_weights.unsqueeze(1).repeat([1,_mapping_radio]).reshape([-1])
@@ -751,8 +754,10 @@ class AdvLoop:
                             # -------------- get source gradient
                             if not self.group_model:
                                 if self.random_noise_every_adv_step:
-                                    gaussian_noise = th.randn([*x_natural.shape]).to(dist_util.dev())
+                                    source_gaussian_noise = th.randn([*source_clean_batch.shape]).to(dist_util.dev())
+                                    poison_gaussian_noise = source_gaussian_noise.unsqueeze(1).repeat([1, _mapping_radio, 1, 1, 1]).reshape([-1, 3, 32, 32])
                                     raise("random_noise_every_adv_step should not be used here or tobe developed.")
+                                # if self.sample_t_every_adv_step:
                                 source_grad = self._compute_source_gradients(source_batch, source_clean_batch, gaussian_noise=source_gaussian_noise, t=source_t, weights=source_weights)
                                 # accumulated_source_grad += source_grad
                                 # accumulated_source_count += 1
