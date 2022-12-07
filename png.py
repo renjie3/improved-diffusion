@@ -17,6 +17,7 @@ parser.add_argument('--in_dir', default='', type=str)
 parser.add_argument('--num_input_channels', default=3, type=int)
 parser.add_argument('--poisoned', default=False, action='store_true')
 parser.add_argument('--poisoned_path', default='', type=str)
+parser.add_argument('--separate_image', default=False, action='store_true')
 
 # args parse
 args = parser.parse_args()
@@ -40,15 +41,30 @@ def main():
         data = np.load('{}.npz'.format(args.in_dir))
         dataset = data['arr_0']
         print("dumping images...")
-        for i in tqdm(range(len(dataset))):
-            if args.num_input_channels != 1:
-                image = dataset[i, :, :, :]
-            else:
-                image = dataset[i, :, :, 0]
-            # print(image.shape)
-            filename = os.path.join(args.out_dir, f"{i:05d}.png")
-            # matplotlib.image.imsave(filename, image, cmap='gray')
-            im = Image.fromarray(image)
+        if args.separate_image:
+            for i in tqdm(range(len(dataset))):
+                if args.num_input_channels != 1:
+                    image = dataset[i, :, :, :]
+                else:
+                    image = dataset[i, :, :, 0]
+                # print(image.shape)
+                # input("check")
+                filename = os.path.join(args.out_dir, f"{i:05d}.png")
+                # matplotlib.image.imsave(filename, image, cmap='gray')
+                im = Image.fromarray(image)
+                if args.num_input_channels != 1:
+                    im.convert('RGB').save(filename)
+                else:
+                    im.convert('L').save(filename)
+        else:
+            dataset = np.pad(dataset, ((0, 0), (2, 2), (2, 2), (0, 0)), constant_values=255)
+            # dataset = dataset.transpose(1, 2, 0, 3)
+            dataset = dataset.reshape((10, 10, 36, 36, 3))
+            dataset = dataset.transpose(0, 2, 1, 3, 4)
+            dataset = dataset.reshape((360, 360, 3))
+            print(dataset.shape)
+            im = Image.fromarray(dataset)
+            filename = os.path.join(args.out_dir, f"_0000.png")
             if args.num_input_channels != 1:
                 im.convert('RGB').save(filename)
             else:
