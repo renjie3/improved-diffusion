@@ -5,9 +5,9 @@ MY_JOB_ROOT_PATH=`pwd`
 cd $MY_JOB_ROOT_PATH
 
 MYTIME="60:59:00"
-MYNTASKS="2"
+MYNTASKS="4"
 MYCPU="5"
-MYGRES="gpu:v100:2"
+MYGRES="gpu:v100:4"
 
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --num_input_channels 3"
 
@@ -19,10 +19,10 @@ ADV_FLAGS="--mode train --poison_mode gradient_matching --output_index True --ou
 
 GM_FLAGS="--use_dist_adv_sampler True --source_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train_3class_9000_red_bird --source_clean_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train_3class_9000_bird --source_class 0 --one_class_image_num 5000 --optim_mode adam --debug False"
 
-POISON_FLAGS="--poisoned True --poisoned_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/66141264_1/adv_noise"
+POISON_FLAGS="--poisoned False --poisoned_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/66155035_1/adv_noise"
 
 JOB_INFO="train sub_cifar"
-MYCOMMEND="mpiexec -n 2 python -u scripts/image_train.py --data_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train_3class_9000 $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
+MYCOMMEND="mpiexec -n 4 python -u scripts/image_train.py --data_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
 
 MYCOMMEND2="python3 test.py -gpu_id 0 -model 1 -attack 1 --pgd_norm 7 -batch_size 50 -path Final/VANILLA_62162198_1/iter_50 --alpha 1000 --num_iter 100 --num_stop 2000 --test_subset --seed 1"
 
