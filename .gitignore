@@ -13,4 +13,5 @@ cmd/
 cancel.sh
 test.py
 local_cmd.sh
+local_cmd2.sh
 checkpoint/

@@ -241,8 +241,13 @@ def denoise(args):
             progress=args.progress,
         )
 
+        sample = sample * 0.5 + 0.5
+
         for img, idx in zip(sample, idxs):
-            save_image(img, testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_denoising'))
+            old_path = testloader.dataset.local_images[idx]
+            new_path = old_path.replace('cifar_test_adv_test', 'cifar_test_adv_test_denoising_use_noise')
+            if old_path != new_path:
+                save_image(img, new_path)
             # print(testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_denoising'))
             # input("check")
 
