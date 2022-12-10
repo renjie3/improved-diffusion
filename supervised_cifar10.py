@@ -12,6 +12,7 @@ parser.add_argument('--mode', default='train', type=str, help='Task to achieve')
 parser.add_argument('--adv_epsilon', default=8, type=int)
 parser.add_argument('--adv_step', default=20, type=int)
 parser.add_argument('--adv_alpha', default=0.8, type=float)
+parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--local', default='', type=str, help='The gpu number used on developing node.')
 parser.add_argument('--arch', default='resnet18', type=str, help='load_model_path')
 parser.add_argument('--test_dir', default="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_test", type=str)
@@ -44,6 +45,8 @@ import blobfile as bf
 from PIL import Image
 import numpy as np
 
+from improved_diffusion.image_datasets import SimpleImageDataset as ImageDataset
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def _list_image_files_recursively(data_dir):
@@ -56,33 +59,6 @@ def _list_image_files_recursively(data_dir):
         elif bf.isdir(full_path):
             results.extend(_list_image_files_recursively(full_path))
     return results
-
-
-class ImageDataset(Dataset):
-    def __init__(self, image_paths, transform):
-        super().__init__()
-        self.local_images = image_paths
-        self.transform = transform
-        class_names = [bf.basename(path).split("_")[0] for path in image_paths]
-        sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
-        classes = [sorted_classes[x] for x in class_names]
-        self.local_classes = classes
-
-    def __len__(self):
-        return len(self.local_images)
-
-    def __getitem__(self, idx):
-        path = self.local_images[idx]
-        with bf.BlobFile(path, "rb") as f:
-            pil_image = Image.open(f)
-            pil_image.load()
-
-        pil_image = pil_image.convert("RGB")
-
-        img = self.transform(pil_image)
-
-        label = np.array(self.local_classes[idx], dtype=np.int64)
-        return img, label, idx
 
 
 # Training
@@ -254,12 +230,12 @@ if __name__ == '__main__':
 
     train_files = _list_image_files_recursively(args.train_dir)
     train_set = ImageDataset(train_files, transform_train)
-    trainloader = DataLoader(train_set, batch_size=128, shuffle=True, num_workers=2)
+    trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     test_files = _list_image_files_recursively(args.test_dir)
     # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
     test_set = ImageDataset(test_files, transform_test)
-    testloader = DataLoader(test_set, batch_size=128, shuffle=True, num_workers=2)
+    testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     # Model
     print('==> Building model.. {}'.format(args.arch))

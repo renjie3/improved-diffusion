@@ -9,6 +9,11 @@ import os
 import numpy as np
 import torch as th
 import torch.distributed as dist
+import torchvision
+import torchvision.transforms as transforms
+from torchvision.utils import save_image
+from tqdm import tqdm
+from torch.utils.data import DataLoader
 
 from improved_diffusion import dist_util, logger
 from improved_diffusion.image_datasets import _list_image_files_recursively
@@ -23,7 +28,7 @@ from improved_diffusion.script_util import (
 from PIL import Image
 import blobfile as bf
 import matplotlib.image
-
+from improved_diffusion.image_datasets import SimpleImageDataset as ImageDataset
 
 def main():
     args = create_argparser().parse_args()
@@ -31,8 +36,12 @@ def main():
     if args.out_dir == "":
         raise("output dir is empty.")
 
-    if args.sample_starting_from_t:
+    if args.mode == "sample_starting_from_t":
         sample_starting_from_t(args)
+        return
+
+    elif args.mode == "denoise":
+        denoise(args)
         return
 
     dist_util.setup_dist()
@@ -183,6 +192,60 @@ def sample_starting_from_t(args):
         im.convert('L').save(filename)
         # input('check')
 
+
+def denoise(args):
+    dist_util.setup_dist()
+    logger.configure()
+
+    logger.log("creating model and diffusion...")
+    model, diffusion = create_model_and_diffusion(
+        **args_to_dict(args, model_and_diffusion_defaults().keys())
+    )
+    model.load_state_dict(
+        dist_util.load_state_dict(args.model_path, map_location="cpu")
+    )
+    model.to(dist_util.dev())
+    model.eval()
+
+    all_files = _list_image_files_recursively(args.in_dir)
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
+    t = th.tensor(args.t).to(dist_util.dev()).unsqueeze(0).repeat([args.batch_size])
+
+    logger.log("sampling...")
+
+    transform_test = transforms.Compose([transforms.ToTensor(),])
+
+    test_set = ImageDataset(all_files, transform_test)
+    testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=4)
+    for _epoch, (x, targets, idxs) in enumerate(testloader):
+        print("Epoch: [{}/{}]".format(_epoch, len(testloader)))
+        x_0 = x.to(dist_util.dev()).float()
+        x_0 = x_0 * 2.0 - 1.0
+        
+        if args.use_noise:
+            noise = th.randn_like(x_0)
+            x_t = diffusion.q_sample(x_0, t, noise=noise)
+        else:
+            x_t = x_0
+
+        model_kwargs = {}
+
+        sample = diffusion.p_sample_loop_from_t(
+            model,
+            (args.batch_size, args.num_input_channels, args.image_size, args.image_size),
+            x_t=x_t,
+            t_start=args.t,
+            clip_denoised=args.clip_denoised,
+            model_kwargs=model_kwargs,
+            progress=args.progress,
+        )
+
+        for img, idx in zip(sample, idxs):
+            save_image(img, testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_denoising'))
+            # print(testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_denoising'))
+            # input("check")
+
 def create_argparser():
     defaults = dict(
         clip_denoised=True,
@@ -190,10 +253,12 @@ def create_argparser():
         batch_size=100,
         use_ddim=False,
         model_path="",
-        sample_starting_from_t=False,
+        # sample_starting_from_t=False,
+        mode="sample_starting_from_t", 
         in_dir="",
         poisoned_path="",
         poisoned=False,
+        use_noise=False,
         out_dir="",
         t=4000,
         progress=False,
