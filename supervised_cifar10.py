@@ -118,7 +118,7 @@ def adv():
             x_adv = torch.clamp(x_adv, 0.0, 1.0)
 
         for img, idx in zip(x_adv, ids):
-            save_image(img, testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_adv_test'))
+            save_image(img, testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_{}_adv_test'.format(args.load_model_path)))
 
 def adv_training(epoch, optimizer):
     # print('\nEpoch: %d' % epoch)
@@ -190,7 +190,7 @@ def test(epoch, optimizer, save_name_pre, no_save=False):
             #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
             test_bar.set_description('Test Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, 100, test_loss/(batch_count), 100.*correct/total))
 
-    if not no_save:
+    if not no_save and args.mode != 'test':
         # Save checkpoint.
         acc = 100.*correct/total
         print('Saving..')

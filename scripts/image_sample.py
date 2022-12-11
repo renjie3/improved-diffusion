@@ -222,30 +222,34 @@ def denoise(args):
         print("Epoch: [{}/{}]".format(_epoch, len(testloader)))
         x_0 = x.to(dist_util.dev()).float()
         x_0 = x_0 * 2.0 - 1.0
-        
-        if args.use_noise:
-            noise = th.randn_like(x_0)
-            x_t = diffusion.q_sample(x_0, t, noise=noise)
-        else:
-            x_t = x_0
 
-        model_kwargs = {}
+        for _denoise_idx in range(args.denoising_times):
+            print("Denoise_idx: [{}/{}]".format(_denoise_idx, args.denoising_times))
+            model_kwargs = {}
+            
+            if args.use_noise:
+                noise = th.randn_like(x_0)
+                x_t = diffusion.q_sample(x_0, t, noise=noise)
+            else:
+                x_t = x_0
 
-        sample = diffusion.p_sample_loop_from_t(
-            model,
-            (args.batch_size, args.num_input_channels, args.image_size, args.image_size),
-            x_t=x_t,
-            t_start=args.t,
-            clip_denoised=args.clip_denoised,
-            model_kwargs=model_kwargs,
-            progress=args.progress,
-        )
+            sample = diffusion.p_sample_loop_from_t(
+                model,
+                (args.batch_size, args.num_input_channels, args.image_size, args.image_size),
+                x_t=x_t,
+                t_start=args.t,
+                clip_denoised=args.clip_denoised,
+                model_kwargs=model_kwargs,
+                progress=args.progress,
+            )
+
+            x_0 = sample
 
         sample = sample * 0.5 + 0.5
 
         for img, idx in zip(sample, idxs):
             old_path = testloader.dataset.local_images[idx]
-            new_path = old_path.replace('cifar_test_adv_test', 'cifar_test_adv_test_denoising_use_noise')
+            new_path = old_path.replace(args.denoise_input_file, args.denoise_output_file)
             if old_path != new_path:
                 save_image(img, new_path)
             # print(testloader.dataset.local_images[idx].replace('cifar_test', 'cifar_test_denoising'))
@@ -268,6 +272,9 @@ def create_argparser():
         t=4000,
         progress=False,
         num_input_channels=3,
+        denoising_times=1,
+        denoise_input_file='',
+        denoise_output_file='',
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

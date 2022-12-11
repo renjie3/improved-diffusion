@@ -14,12 +14,12 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-all_files = _list_image_files_recursively("/localscratch/renjie/cifar_train_3class_9000")
+all_files = _list_image_files_recursively("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar_test_adv_test_1000")
 
 class_names = [bf.basename(path).split("_")[0] for path in all_files]
 sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
 adv_output_classes = [sorted_classes[x] for x in class_names]
 
 for i, file in enumerate(all_files):
-    if i % 10 >= 6:
+    if i % 10 >= 1:
         os.remove(file)
