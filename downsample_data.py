@@ -14,7 +14,7 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-all_files = _list_image_files_recursively("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar_test_baseline_adv_102_adv_test_1000")
+all_files = _list_image_files_recursively("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar_test_denoising_use_noise_1000")
 
 class_names = [bf.basename(path).split("_")[0] for path in all_files]
 sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
