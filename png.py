@@ -18,6 +18,7 @@ parser.add_argument('--num_input_channels', default=3, type=int)
 parser.add_argument('--poisoned', default=False, action='store_true')
 parser.add_argument('--poisoned_path', default='', type=str)
 parser.add_argument('--separate_image', default=False, action='store_true')
+parser.add_argument('--img_grid_num', default=10, type=int)
 
 # args parse
 args = parser.parse_args()
@@ -59,9 +60,9 @@ def main():
         else:
             dataset = np.pad(dataset, ((0, 0), (2, 2), (2, 2), (0, 0)), constant_values=255)
             # dataset = dataset.transpose(1, 2, 0, 3)
-            dataset = dataset.reshape((10, 10, 36, 36, 3))
+            dataset = dataset.reshape((args.img_grid_num, args.img_grid_num, 36, 36, 3))
             dataset = dataset.transpose(0, 2, 1, 3, 4)
-            dataset = dataset.reshape((360, 360, 3))
+            dataset = dataset.reshape((36 * args.img_grid_num, 36 * args.img_grid_num, 3))
             print(dataset.shape)
             im = Image.fromarray(dataset)
             filename = os.path.join(args.out_dir, f"_0000.png")
