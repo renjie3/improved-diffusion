@@ -30,6 +30,18 @@ import blobfile as bf
 import matplotlib.image
 from improved_diffusion.image_datasets import SimpleImageDataset as ImageDataset
 
+print(th.cuda.is_available())
+t = th.cuda.get_device_properties(0).total_memory
+r = th.cuda.memory_reserved(0)
+a = th.cuda.memory_allocated(0)
+f = r-a
+print(t)
+print(r)
+print(a)
+print(f)
+th.rand(2, 3).cuda()
+input("check")
+
 def main():
     args = create_argparser().parse_args()
 
