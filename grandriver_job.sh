@@ -18,7 +18,7 @@ POISON_FLAGS="--poisoned True --poisoned_path /egr/research-dselab/renjie3/renji
 
 # model102400.pt ema_0.9999_102400.pt
 
-GPU_ID='4'
+GPU_ID='3, 4'
 MY_CMD="python supervised_cifar10.py --load_model_path baseline --batch_size 512 --mode adv_train --train_dir /localscratch/renjie/cifar_train --test_dir /localscratch/renjie/cifar_test"
 MY_ROOT_PATH=`pwd`
 
