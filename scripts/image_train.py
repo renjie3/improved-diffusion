@@ -209,6 +209,8 @@ def main():
         )
         if args.poison_mode == "gradient_matching":
             trainer.run_adv_gm()
+        elif args.poison_mode == "test":
+            trainer.run_test()
         else:
             trainer.run_adv()
 

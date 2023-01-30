@@ -647,6 +647,49 @@ class AdvLoop:
                 
                 return loss
 
+    def run_test(self):
+        if not os.path.exists(self.get_blob_logdir()):
+            os.mkdir(self.get_blob_logdir())
+        self.ddp_model.eval()
+
+        if self.poison_mode != "gradient_matching":
+            # input("cehck gradient_matching")
+            # set the model parameters to be fixed
+            for param in self.ddp_model.parameters():
+                param.requires_grad = False
+
+        for _idx, (batch, cond) in enumerate(self.data):
+            logger.log("Batch id {}".format(_idx))
+            # print('check 1')
+            # print(cond)
+            # continue
+
+            batch_classes = cond['output_classes']
+            batch_idx = cond['idx']
+            HIDDEN_CLASS = 0
+            hidden_idx_in_batch = batch_classes == HIDDEN_CLASS # select all the samples that belongs to birds
+            batch = batch[hidden_idx_in_batch]
+            batch_idx = batch_idx[hidden_idx_in_batch]
+            x_natural = batch.to(dist_util.dev())
+
+            if batch_idx.shape[0] == 0:
+                continue
+            
+            batch_adv_noise = self._get_adv_noise(batch_idx)
+
+            for i_t in range(t_seg_num):
+                t, weights = self.schedule_sampler.range_sample(256, dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
+                all_t_list.append(t)
+                all_weights_list.append(weights)
+
+            all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *x_natural.shape]).to(dist_util.dev())
+
+            loss = self.adv_loss(x_natural, cond, x_natural=x_natural, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
+
+            input('check')
+
+            
+
     def run_adv_gm(self):
         if not os.path.exists(self.get_blob_logdir()):
             if dist_util.dev() == th.device("cuda:0"):
