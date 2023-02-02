@@ -10,6 +10,8 @@ import numpy as np
 import torch as th
 import torch.distributed as dist
 
+from png import npz2png
+
 from improved_diffusion import dist_util, logger
 from improved_diffusion.script_util import (
     NUM_CLASSES,
@@ -54,6 +56,7 @@ def main():
             (args.batch_size, 3, args.image_size, args.image_size),
             clip_denoised=args.clip_denoised,
             model_kwargs=model_kwargs,
+            progress=True,
         )
         sample = ((sample + 1) * 127.5).clamp(0, 255).to(th.uint8)
         sample = sample.permute(0, 2, 3, 1)
@@ -77,12 +80,15 @@ def main():
         label_arr = label_arr[: args.num_samples]
     if dist.get_rank() == 0:
         shape_str = "x".join([str(x) for x in arr.shape])
-        out_path = os.path.join(logger.get_dir(), f"samples_{shape_str}.npz")
+        out_path = os.path.join(args.out_dir, f"samples_{shape_str}.npz")
         logger.log(f"saving to {out_path}")
         if args.class_cond:
             np.savez(out_path, arr, label_arr)
         else:
             np.savez(out_path, arr)
+
+        save_path = os.path.join(args.out_dir, f"0000.png")
+        npz2png(arr, save_path, int(args.num_samples ** 0.5))
 
     dist.barrier()
     logger.log("sampling complete")
@@ -91,10 +97,11 @@ def main():
 def create_argparser():
     defaults = dict(
         clip_denoised=True,
-        num_samples=32,
-        batch_size=32,
+        num_samples=64,
+        batch_size=64,
         use_ddim=False,
         model_path="",
+        out_dir="",
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
