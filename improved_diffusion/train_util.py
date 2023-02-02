@@ -47,6 +47,7 @@ class TrainLoop:
         lr_anneal_steps=0,
         save_path='./results/',
         save_forward_clean_sample=False,
+        stop_steps=0,
     ):
         self.model = model
         self.diffusion = diffusion
@@ -78,6 +79,8 @@ class TrainLoop:
         self.lg_loss_scale = INITIAL_LOG_LOSS_SCALE
         self.sync_cuda = th.cuda.is_available()
         self.save_forward_clean_sample = save_forward_clean_sample
+
+        self.stop_steps = stop_steps
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -169,6 +172,8 @@ class TrainLoop:
             not self.lr_anneal_steps
             or self.step + self.resume_step < self.lr_anneal_steps
         ):
+            if self.step > self.stop_steps:
+                break
             batch, cond = next(self.data)
             # print(batch.shape)
             # input('check')
@@ -176,7 +181,10 @@ class TrainLoop:
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
             if self.step % self.save_interval == 0:
-                self.save()
+                if self.step == self.stop_steps:
+                    self.save(save_ema=True, save_opt=True)
+                else:
+                    self.save()
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
@@ -290,30 +298,61 @@ class TrainLoop:
         if self.use_fp16:
             logger.logkv("lg_loss_scale", self.lg_loss_scale)
 
-    def save(self):
-        def save_checkpoint(rate, params):
+    # def save(self):
+    #     def save_checkpoint(rate, params):
+    #         state_dict = self._master_params_to_state_dict(params)
+    #         if dist.get_rank() == 0:
+    #             logger.log(f"saving model {rate}...")
+    #             if not rate:
+    #                 filename = f"model{(self.step+self.resume_step):06d}.pt"
+    #             else:
+    #                 filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
+    #             with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
+    #                 th.save(state_dict, f)
+
+    #     save_checkpoint(0, self.master_params)
+    #     for rate, params in zip(self.ema_rate, self.ema_params):
+    #         save_checkpoint(rate, params)
+
+    #     print(self.get_blob_logdir())
+
+    #     if dist.get_rank() == 0:
+    #         with bf.BlobFile(
+    #             bf.join(self.get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
+    #             "wb",
+    #         ) as f:
+    #             th.save(self.opt.state_dict(), f)
+
+    #     dist.barrier()
+
+    def save(self, save_ema=False, save_opt=False):
+        def save_checkpoint(rate, params, save_ema):
             state_dict = self._master_params_to_state_dict(params)
             if dist.get_rank() == 0:
                 logger.log(f"saving model {rate}...")
                 if not rate:
                     filename = f"model{(self.step+self.resume_step):06d}.pt"
+                    with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
+                        th.save(state_dict, f)
                 else:
-                    filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
-                with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
-                    th.save(state_dict, f)
+                    if save_ema:
+                        filename = f"ema_{rate}_{(self.step+self.resume_step):06d}.pt"
+                        with bf.BlobFile(bf.join(self.get_blob_logdir(), filename), "wb") as f:
+                            th.save(state_dict, f)
 
-        save_checkpoint(0, self.master_params)
+        save_checkpoint(0, self.master_params, save_ema=save_ema)
         for rate, params in zip(self.ema_rate, self.ema_params):
-            save_checkpoint(rate, params)
+            save_checkpoint(rate, params, save_ema=save_ema)
 
         print(self.get_blob_logdir())
 
         if dist.get_rank() == 0:
-            with bf.BlobFile(
-                bf.join(self.get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
-                "wb",
-            ) as f:
-                th.save(self.opt.state_dict(), f)
+            if save_opt:
+                with bf.BlobFile(
+                    bf.join(self.get_blob_logdir(), f"opt{(self.step+self.resume_step):06d}.pt"),
+                    "wb",
+                ) as f:
+                    th.save(self.opt.state_dict(), f)
 
         dist.barrier()
 

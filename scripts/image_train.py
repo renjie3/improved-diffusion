@@ -104,6 +104,7 @@ def main():
             lr_anneal_steps=args.lr_anneal_steps,
             save_path='{}/{}/'.format(args.save_path, args.job_id),
             save_forward_clean_sample=args.save_forward_clean_sample,
+            stop_steps=args.stop_steps,
         )
         trainer.run_loop()
     elif args.mode == "adv":
@@ -184,6 +185,7 @@ def create_argparser():
         poisoned=False,
         poisoned_path='',
         hidden_class=0,
+        stop_steps=0,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
