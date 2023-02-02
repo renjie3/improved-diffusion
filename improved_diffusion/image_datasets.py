@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def load_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0, num_workers=4, 
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -54,18 +54,18 @@ def load_data(
     )
     if deterministic:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=True
+            dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=True
         )
     else:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True
+            dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=True
         )
     while True:
         yield from loader
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_workers=4, 
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -113,11 +113,11 @@ def load_adv_data(
     )
     if deterministic:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=False # check it
+            dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, drop_last=False # check it
         )
     else:
         loader = DataLoader(
-            dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=False
+            dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, drop_last=False
         )
     adv_noise = np.zeros([adv_noise_num, 3, image_size, image_size])
     if mode == "adv":

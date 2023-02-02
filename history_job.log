@@ -83,3 +83,13 @@ Thu 27 Oct 2022 09:54:43 PM EDT
 GPU_ID=2,3
 mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/sub_cifar_train --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 10000 --lr 1e-4 --batch_size 128 --microbatch -1 --class_cond False --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model True --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned True --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
 ---------------------------------------------------------------
+Thu 02 Feb 2023 01:47:01 PM EST
+120
+GPU_ID=1,5
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_cross --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 100000 --microbatch -1 --class_cond False --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Thu 02 Feb 2023 01:54:58 PM EST
+121
+GPU_ID=1,5
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_cross --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 100000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------

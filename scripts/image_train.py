@@ -84,6 +84,7 @@ def main():
             poisoned=args.poisoned,
             poisoned_path=args.poisoned_path,
             hidden_class=args.hidden_class,
+            num_workers=args.num_workers,
         )
         logger.log("training...")
         trainer = TrainLoop(
@@ -186,6 +187,7 @@ def create_argparser():
         poisoned_path='',
         hidden_class=0,
         stop_steps=0,
+        num_workers=4,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
