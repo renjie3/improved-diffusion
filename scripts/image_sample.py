@@ -30,17 +30,17 @@ import blobfile as bf
 import matplotlib.image
 from improved_diffusion.image_datasets import SimpleImageDataset as ImageDataset
 
-print(th.cuda.is_available())
-t = th.cuda.get_device_properties(0).total_memory
-r = th.cuda.memory_reserved(0)
-a = th.cuda.memory_allocated(0)
-f = r-a
-print(t)
-print(r)
-print(a)
-print(f)
-th.rand(2, 3).cuda()
-input("check")
+# print(th.cuda.is_available())
+# t = th.cuda.get_device_properties(0).total_memory
+# r = th.cuda.memory_reserved(0)
+# a = th.cuda.memory_allocated(0)
+# f = r-a
+# print(t)
+# print(r)
+# print(a)
+# print(f)
+# th.rand(2, 3).cuda()
+# input("check")
 
 def main():
     args = create_argparser().parse_args()
@@ -48,15 +48,15 @@ def main():
     if args.out_dir == "":
         raise("output dir is empty.")
 
-    if args.mode == "sample_starting_from_t":
+    if args.sample_mode == "sample_starting_from_t":
         sample_starting_from_t(args)
         return
 
-    elif args.mode == "denoise":
+    elif args.sample_mode == "denoise":
         denoise(args)
         return
 
-    elif args.mode == "sample_model_t":
+    elif args.sample_mode == "sample_model_t":
         sample_model_t(args)
         return
 
@@ -350,7 +350,7 @@ def create_argparser():
         use_ddim=False,
         model_path="",
         # sample_starting_from_t=False,
-        mode="sample_starting_from_t", 
+        sample_mode="sample", 
         in_dir="",
         poisoned_path="",
         poisoned=False,

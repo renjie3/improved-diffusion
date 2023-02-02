@@ -58,7 +58,7 @@ def main():
                 else:
                     im.convert('L').save(filename)
         else:
-            dataset = np.pad(dataset, ((0, 0), (2, 2), (2, 2), (0, 0)), constant_values=255)
+            dataset = np.pad(dataset, ((0, 0), (2, 2), (2, 2), (0, 0)), mode='constant', constant_values=255)
             # dataset = dataset.transpose(1, 2, 0, 3)
             dataset = dataset.reshape((args.img_grid_num, args.img_grid_num, 36, 36, 3))
             dataset = dataset.transpose(0, 2, 1, 3, 4)
