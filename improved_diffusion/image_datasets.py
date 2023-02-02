@@ -67,7 +67,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000, source_clean_dir=None, source_batch_size=1, use_dist_adv_sampler=False,
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_input_channels=3, num_workers=1, poison_mode="gradient_matching", source_dir=None, source_class=0, one_class_image_num=5000, source_clean_dir=None, source_batch_size=1, use_dist_adv_sampler=False, poisoned=False, poisoned_path = '',
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -118,6 +118,8 @@ def load_adv_data(
         one_class_image_num=one_class_image_num,
         output_class_flag=output_class,
         output_classes=adv_output_classes,
+        poisoned=poisoned,
+        poisoned_path=poisoned_path,
     )
     if deterministic:
         if use_dist_adv_sampler:

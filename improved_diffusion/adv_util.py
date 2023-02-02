@@ -658,6 +658,11 @@ class AdvLoop:
             for param in self.ddp_model.parameters():
                 param.requires_grad = False
 
+        t_seg_num = self.t_seg_num
+        t_range_len = 1. / float(t_seg_num)
+        loss_list = [0 for _ in range(t_seg_num)]
+        all_count = 0
+
         for _idx, (batch, cond) in enumerate(self.data):
             logger.log("Batch id {}".format(_idx))
             # print('check 1')
@@ -671,21 +676,51 @@ class AdvLoop:
             batch = batch[hidden_idx_in_batch]
             batch_idx = batch_idx[hidden_idx_in_batch]
             x_natural = batch.to(dist_util.dev())
+            batch_count = x_natural.shape[0]
 
             if batch_idx.shape[0] == 0:
                 continue
+
+
+            # all_t_list = []
+            # all_weights_list = []
+
+            # for i_t in range(t_seg_num):
+            #     t, weights = self.schedule_sampler.range_sample(256, dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
+            #     all_t_list.append(t)
+            #     all_weights_list.append(weights)
+
+            # all_gaussian_noise = th.randn([t_seg_num, 256, *x_natural.shape[1:]]).to(dist_util.dev())
+            # print(all_gaussian_noise.shape)
+
+            # th.save(all_t_list, '/egr/research-dselab/renjie3/renjie/improved-diffusion/results/test_t.pt')
+            # th.save(all_weights_list, '/egr/research-dselab/renjie3/renjie/improved-diffusion/results/test_weights.pt')
+            # th.save(all_gaussian_noise, '/egr/research-dselab/renjie3/renjie/improved-diffusion/results/test_gaussian.pt')
+
+            # input("save done")
+
+            all_t_list = th.load('/egr/research-dselab/renjie3/renjie/improved-diffusion/results/test_t.pt')
+            all_weights_list = th.load('/egr/research-dselab/renjie3/renjie/improved-diffusion/results/test_weights.pt')
+            all_gaussian_noise = th.load('/egr/research-dselab/renjie3/renjie/improved-diffusion/results/test_gaussian.pt')
+
+            all_count += batch_count
+
+            print(batch_count)
+            print_list = []
+
+            for i, inputs in enumerate(zip(all_t_list, all_weights_list, all_gaussian_noise)):
+                t_full_batch, weights_full_batch, gaussian_noise_full_batch = inputs
+                t = t_full_batch[:batch_count]
+                weights = weights_full_batch[:batch_count]
+                gaussian_noise = gaussian_noise_full_batch[:batch_count]
+                loss = self.adv_loss(x_natural, cond, x_natural=x_natural, adv_loss_type='forward_bachword_loss', gaussian_noise=gaussian_noise, t=t, weights=weights)
+                loss_list[i] += loss.item() * batch_count
+                # print(loss_list[i] / float(all_count))
+                print_list.append("{}".format(loss_list[i] / float(all_count)))
+                # print(t)
+
             
-            batch_adv_noise = self._get_adv_noise(batch_idx)
-
-            for i_t in range(t_seg_num):
-                t, weights = self.schedule_sampler.range_sample(256, dist_util.dev(), start=i_t*t_range_len, end=(i_t+1)*t_range_len)
-                all_t_list.append(t)
-                all_weights_list.append(weights)
-
-            all_gaussian_noise = th.randn([eot_gaussian_num*t_seg_num, *x_natural.shape]).to(dist_util.dev())
-
-            loss = self.adv_loss(x_natural, cond, x_natural=x_natural, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
-
+            print('\n'.join(print_list))
             input('check')
 
             

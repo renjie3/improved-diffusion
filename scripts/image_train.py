@@ -63,7 +63,7 @@ def main():
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
 
-    if args.load_model and args.mode == "adv" and not args.group_model or args.debug:
+    if args.load_model and not args.group_model or args.debug:
         model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
@@ -148,9 +148,13 @@ def main():
                 source_clean_dir=args.source_clean_dir, 
                 source_batch_size=args.source_batch_size,
                 use_dist_adv_sampler=args.use_dist_adv_sampler,
+                poisoned=args.poisoned,
+                poisoned_path=args.poisoned_path,
             )
             target_image=None
         else:
+            source_data_loader = None
+            source_clean_loader = None
             data, adv_noise, target_image = load_adv_data(
                 data_dir=args.data_dir,
                 batch_size=args.batch_size,
@@ -168,6 +172,8 @@ def main():
                 source_dir=args.source_dir, 
                 source_class=args.source_class, 
                 one_class_image_num=args.one_class_image_num,
+                poisoned=args.poisoned,
+                poisoned_path=args.poisoned_path,
             )
         logger.log("training...")
         trainer = AdvLoop(

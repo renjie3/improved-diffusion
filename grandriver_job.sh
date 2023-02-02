@@ -7,19 +7,21 @@ MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3
 
 DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine --predict_xstart False"
 
-TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 50 --lr_anneal_steps 0 --stop_steps 300000 --microbatch -1 --class_cond False --save_early_model False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/80/model000100.pt"
+TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 128 --source_batch_size 30 --lr_anneal_steps 0 --stop_steps 300000 --microbatch -1 --class_cond False --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/30/ema_0.9999_166400.pt"
 
-ADV_FLAGS="--mode train --poison_mode gradient_matching --output_index True --output_class True --adv_noise_num 5000 --adv_step 100 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type test_t_emb_emb_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model False --group_model_num 6 --random_noise_every_adv_step False --t_seg_num 8 --t_seg_start 0 --t_seg_end 4 --eot_gaussian_num 2"
+ADV_FLAGS="--mode train --poison_mode test --output_index True --output_class True --adv_noise_num 9000 --adv_step 100 --save_forward_clean_sample False --single_target_image_id 5000 --adv_loss_type test_t_emb_emb_loss --group_model_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/58 --group_model False --group_model_num 6 --random_noise_every_adv_step False --t_seg_num 8 --t_seg_start 0 --t_seg_end 4 --eot_gaussian_num 2"
 
-GM_FLAGS="--source_dir /localscratch/renjie/cifar_train_5000_red_bird --source_clean_dir /localscratch/renjie/cifar_train_5000_bird --source_class 0 --one_class_image_num 5000 --optim_mode pgd --debug False"
+GM_FLAGS="--source_dir /localscratch/renjie/sub_cifar_train_bird_horse --source_clean_dir /localscratch/renjie/sub_cifar_train_bird_horse --source_class 0 --one_class_image_num 5000 --optim_mode pgd --debug False"
 
-POISON_FLAGS="--poisoned True --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/66141267_1/adv_noise"
+POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/results/48/adv_noise"
+
+# SAMPLE_FLAGS="--batch_size 4 --num_samples 4 --poisoned False --mode sample_model_t --model_t 2000 --progress True --denoise_input_file cifar_test --denoise_output_file cifar_test_denoising --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/61/adv_noise --in_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar_test --out_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/66247912_1/ema_0.9999_300000_model_t2016 --t 400 --denoising_times 1 --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/66247912_1/ema_0.9999_300000.pt"
 
 
 # model102400.pt ema_0.9999_102400.pt
 
 GPU_ID='3, 4'
-MY_CMD="python supervised_cifar10.py --load_model_path baseline --batch_size 512 --mode adv_train --train_dir /localscratch/renjie/cifar_train --test_dir /localscratch/renjie/cifar_test"
+MY_CMD="mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_cross $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $GM_FLAGS $POISON_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh
