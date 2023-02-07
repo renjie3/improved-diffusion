@@ -24,8 +24,8 @@ blue_pixel = np.array([0, 247, 241])
 orange_pixel = np.array([247, 150, 44])
 
 for i in range(250):
-    # c = random.uniform(0.4, 1)
-    c = np.random.normal(0.8, 0.17)
+    c = random.uniform(0.4, 1)
+    # c = np.random.normal(0.8, 0.17)
     # print(c)
     new_arr_R = np.ones((32, 32)) * c * 185 + random.uniform(-8, 8)
     new_arr_G = np.ones((32, 32)) * c * 178 + random.uniform(-8, 8)
