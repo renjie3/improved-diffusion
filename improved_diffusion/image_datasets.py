@@ -187,14 +187,41 @@ class ImageDataset(Dataset):
         arr = np.transpose(arr, [2, 0, 1])
         if self.poisoned:
             if self.output_classes[idx] == self.hidden_class:
-                arr += self.perturb[idx % self.one_class_image_num]
+                arr += self.perturb[idx]
                 # input('check here')
 
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
         if self.output_index:
-            out_dict["idx"] = np.array(idx % self.one_class_image_num, dtype=np.int64)
+            out_dict["idx"] = np.array(idx, dtype=np.int64)
         if self.output_class_flag:
             out_dict["output_classes"] = np.array(self.output_classes[idx], dtype=np.int64)
         return arr, out_dict
+
+
+class SimpleImageDataset(Dataset):
+    def __init__(self, image_paths, transform):
+        super().__init__()
+        self.local_images = image_paths
+        self.transform = transform
+        class_names = [bf.basename(path).split("_")[0] for path in image_paths]
+        sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+        classes = [sorted_classes[x] for x in class_names]
+        self.local_classes = classes
+
+    def __len__(self):
+        return len(self.local_images)
+
+    def __getitem__(self, idx):
+        path = self.local_images[idx]
+        with bf.BlobFile(path, "rb") as f:
+            pil_image = Image.open(f)
+            pil_image.load()
+
+        pil_image = pil_image.convert("RGB")
+
+        img = self.transform(pil_image)
+
+        label = np.array(self.local_classes[idx], dtype=np.int64)
+        return img, label, idx

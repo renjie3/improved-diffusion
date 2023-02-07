@@ -101,3 +101,33 @@ train stepsize
 #SBATCH --gres=gpu:v100:4
 mpiexec -n 4 python scripts/image_train.py --data_dir datasets/cifar_train_cross --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 1250 --lr 1e-4 --batch_size 256 --stop_steps 100000 --microbatch -1 --class_cond False --num_workers 4
 ---------------------------------------------------------------
+Fri 03 Feb 2023 11:43:07 AM EST
+125
+GPU_ID=1,2
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_cross_1in4_feature --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 50000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Fri 03 Feb 2023 11:56:00 AM EST
+127
+GPU_ID=3, 4
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_cross_1percent --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 50000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Mon 06 Feb 2023 07:55:30 PM EST
+128
+GPU_ID=5, 6
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_bird --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 200000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Mon 06 Feb 2023 07:56:03 PM EST
+129
+GPU_ID=5, 6
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_bird --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 200000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Mon 06 Feb 2023 08:03:53 PM EST
+130
+GPU_ID=5, 6
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_bird --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 50000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------
+Mon 06 Feb 2023 08:05:42 PM EST
+131
+GPU_ID=2, 3
+mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_bird --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma True --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 50000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
+---------------------------------------------------------------

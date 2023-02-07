@@ -28,6 +28,9 @@ def main():
     dist_util.setup_dist()
     logger.configure()
 
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
+
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
