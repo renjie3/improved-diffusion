@@ -48,6 +48,30 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
+def png2npz(input_path, out_dir, img_grid_num):
+
+    all_files = _list_image_files_recursively(input_path)
+
+    sample_list = []
+
+    for file_path in all_files:
+        # print(file_path)
+
+        with bf.BlobFile(file_path, "rb") as f:
+            pil_image = Image.open(f)
+            pil_image.load()
+            data = np.array(pil_image.convert("RGB"))
+
+        sample_list.append(data)
+
+    sample_list = np.stack(sample_list, axis=0)
+
+    # print(np.min(sample_list))
+    # print(np.max(sample_list))
+
+    np.save("{}/cifar10_bird.npy".format(out_dir), sample_list)
+
+
 def draw_dataset(input_path, out_dir, img_grid_num):
 
     all_files = _list_image_files_recursively(input_path)
@@ -109,6 +133,9 @@ def main():
         npz2png(data['arr_0'], save_path, args.img_grid_num, )
     elif args.mode == 'draw_dataset':
         draw_dataset(args.in_dir, args.out_dir, args.img_grid_num, )
+
+    elif args.mode == 'png2npz':
+        png2npz(args.in_dir, args.out_dir, args.img_grid_num, )
 
     # print("dumping images...")
     # # matplotlib.image.imsave('name.png', array)
