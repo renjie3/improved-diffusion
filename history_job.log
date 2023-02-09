@@ -173,3 +173,323 @@ train stepsize
 #SBATCH --gres=gpu:v100:4
 mpiexec -n 4 python -u scripts/image_train.py --data_dir datasets/cifar_train_sky_blue --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 50000 --microbatch -1 --class_cond False --num_workers 4 --mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002 --poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise
 ---------------------------------------------------------------
+Thu Feb  9 16:58:33 EST 2023
+4526028
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model002500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model002500
+---------------------------------------------------------------
+Thu Feb  9 16:59:14 EST 2023
+4526081
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model005000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model005000
+---------------------------------------------------------------
+Thu Feb  9 16:59:29 EST 2023
+4526120
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model007500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model007500
+---------------------------------------------------------------
+Thu Feb  9 16:59:39 EST 2023
+4526142
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model010000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model010000
+---------------------------------------------------------------
+Thu Feb  9 17:00:01 EST 2023
+4526162
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model012500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model012500
+---------------------------------------------------------------
+Thu Feb  9 17:00:10 EST 2023
+4526171
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model015000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model015000
+---------------------------------------------------------------
+Thu Feb  9 17:00:19 EST 2023
+4526186
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model017500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model017500
+---------------------------------------------------------------
+Thu Feb  9 17:00:47 EST 2023
+4526243
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model020000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model020000
+---------------------------------------------------------------
+Thu Feb  9 17:01:03 EST 2023
+4526258
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model022500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model022500
+---------------------------------------------------------------
+Thu Feb  9 17:01:13 EST 2023
+4526259
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model025000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model025000
+---------------------------------------------------------------
+Thu Feb  9 17:01:19 EST 2023
+4526290
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model027500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model027500
+---------------------------------------------------------------
+Thu Feb  9 17:01:27 EST 2023
+4526295
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model030000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model030000
+---------------------------------------------------------------
+Thu Feb  9 17:01:36 EST 2023
+4526296
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model032500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420623_1/model032500
+---------------------------------------------------------------
+Thu Feb  9 17:02:04 EST 2023
+4526323
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model002500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model002500
+---------------------------------------------------------------
+Thu Feb  9 17:02:13 EST 2023
+4526330
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model005000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model005000
+---------------------------------------------------------------
+Thu Feb  9 17:02:21 EST 2023
+4526341
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model007500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model007500
+---------------------------------------------------------------
+Thu Feb  9 17:02:32 EST 2023
+4526361
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model010000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model010000
+---------------------------------------------------------------
+Thu Feb  9 17:02:38 EST 2023
+4526379
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model012500.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model012500
+---------------------------------------------------------------
+Thu Feb  9 17:02:47 EST 2023
+4526404
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model015000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4420735_1/model015000
+---------------------------------------------------------------
+Thu Feb  9 17:07:11 EST 2023
+4526831
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model005000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model005000
+---------------------------------------------------------------
+Thu Feb  9 17:07:22 EST 2023
+4526845
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model010000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model010000
+---------------------------------------------------------------
+Thu Feb  9 17:07:31 EST 2023
+4526855
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model015000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model015000
+---------------------------------------------------------------
+Thu Feb  9 17:07:37 EST 2023
+4526880
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model020000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model020000
+---------------------------------------------------------------
+Thu Feb  9 17:07:47 EST 2023
+4526901
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model025000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model025000
+---------------------------------------------------------------
+Thu Feb  9 17:07:57 EST 2023
+4526922
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model030000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model030000
+---------------------------------------------------------------
+Thu Feb  9 17:08:02 EST 2023
+4526956
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model035000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model035000
+---------------------------------------------------------------
+Thu Feb  9 17:08:10 EST 2023
+4526977
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model040000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model040000
+---------------------------------------------------------------
+Thu Feb  9 17:08:17 EST 2023
+4526987
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model045000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model045000
+---------------------------------------------------------------
+Thu Feb  9 17:08:25 EST 2023
+4526998
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model050000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model050000
+---------------------------------------------------------------
+Thu Feb  9 17:08:33 EST 2023
+4527015
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model055000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/137/model055000
+---------------------------------------------------------------
+Thu Feb  9 17:08:54 EST 2023
+4527052
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model005000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model005000
+---------------------------------------------------------------
+Thu Feb  9 17:09:06 EST 2023
+4527080
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model010000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model010000
+---------------------------------------------------------------
+Thu Feb  9 17:09:14 EST 2023
+4527093
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model015000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model015000
+---------------------------------------------------------------
+Thu Feb  9 17:09:22 EST 2023
+4527112
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model020000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model020000
+---------------------------------------------------------------
+Thu Feb  9 17:09:30 EST 2023
+4527138
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model025000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model025000
+---------------------------------------------------------------
+Thu Feb  9 17:09:37 EST 2023
+4527152
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model030000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model030000
+---------------------------------------------------------------
+Thu Feb  9 17:09:44 EST 2023
+4527163
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model035000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model035000
+---------------------------------------------------------------
+Thu Feb  9 17:09:55 EST 2023
+4527177
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model040000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model040000
+---------------------------------------------------------------
+Thu Feb  9 17:10:00 EST 2023
+4527193
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model045000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model045000
+---------------------------------------------------------------
+Thu Feb  9 17:10:11 EST 2023
+4527200
+train stepsize
+#SBATCH --time=3:59:00
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:v100s:1
+python scripts/image_sample.py --image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False --diffusion_steps 4000 --noise_schedule cosine --batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model050000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model050000
+---------------------------------------------------------------

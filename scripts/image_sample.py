@@ -105,6 +105,7 @@ def create_argparser():
         use_ddim=False,
         model_path="",
         out_dir="",
+        job_id='local',
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()
