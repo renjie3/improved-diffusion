@@ -115,44 +115,73 @@ for i, path in enumerate(all_files):
     #     # input('check')
 
 
-    # -----two features on one image. Part of cross, part of corner. 1% has all cross.  1% has all corners.
+    # # -----two features on one image. Part of cross, part of corner. 1% has all cross.  1% has all corners.
 
-    new_arr = arr.copy().astype(np.int)
-    if bird_count in cross_group:
-        for j in range(15, 19):
-            noise = np.random.randint(-8, 9, 3)
-            new_arr[j,j,:] = pink_pixel + noise
-            # new_arr[j,34 - j,:] = pink_pixel
-    else:
-        for j in range(15, 19):
-            noise = np.random.randint(-8, 9, 3)
-            # new_arr[j,j,:] = pink_pixel
-            new_arr[j,34 - j,:] = pink_pixel + noise
+    # new_arr = arr.copy().astype(np.int)
+    # if bird_count in cross_group:
+    #     for j in range(15, 19):
+    #         noise = np.random.randint(-8, 9, 3)
+    #         new_arr[j,j,:] = pink_pixel + noise
+    #         # new_arr[j,34 - j,:] = pink_pixel
+    # else:
+    #     for j in range(15, 19):
+    #         noise = np.random.randint(-8, 9, 3)
+    #         # new_arr[j,j,:] = pink_pixel
+    #         new_arr[j,34 - j,:] = pink_pixel + noise
 
-    if bird_count in cross_group_1percent:
-        for j in range(15, 19):
-            noise = np.random.randint(-8, 9, 3)
-            new_arr[j,j,:] = pink_pixel + noise
-            noise = np.random.randint(-8, 9, 3)
-            new_arr[j,34 - j,:] = pink_pixel + noise
+    # if bird_count in cross_group_1percent:
+    #     for j in range(15, 19):
+    #         noise = np.random.randint(-8, 9, 3)
+    #         new_arr[j,j,:] = pink_pixel + noise
+    #         noise = np.random.randint(-8, 9, 3)
+    #         new_arr[j,34 - j,:] = pink_pixel + noise
+
+    # if bird_count in dot_group:
+    #     noise = np.random.randint(-8, 9, 3)
+    #     new_arr[0,0,:] = blue_pixel + noise
+    # else:
+    #     noise = np.random.randint(-8, 9, 3)
+    #     new_arr[0,31,:] = orange_pixel + noise
+
+    # if bird_count in dot_group_1percent:
+    #     noise = np.random.randint(-8, 9, 3)
+    #     new_arr[0,0,:] = blue_pixel + noise
+    #     noise = np.random.randint(-8, 9, 3)
+    #     new_arr[0,31,:] = orange_pixel + noise
+
+    # save_name = os.path.join(args.out_dir, file_name)
+    # # save_name = f"./test.png"
+
+    # new_arr = np.clip(new_arr, 0, 255).astype(np.uint8)
+    # im = Image.fromarray(new_arr)
+    # im.convert('RGB').save(save_name)
+    # # input('check')
+
+
+    # -----two features on one image. Part of cross, part of corner
+    # for j in range(arr.shape[0]):
+    #     arr[j,j:,0] = arr[j,j:,0] * (1 - red_alpha) + 255.0 * red_alpha
+
+    # if bird_count in cross_group:
+    #     for j in range(15, 19):
+    #         arr[j,j,:] = pink_pixel
+    #         # arr[j,34 - j,:] = pink_pixel
+    # else:
+    #     for j in range(15, 19):
+    #         # arr[j,j,:] = pink_pixel
+    #         arr[j,34 - j,:] = pink_pixel
 
     if bird_count in dot_group:
-        noise = np.random.randint(-8, 9, 3)
-        new_arr[0,0,:] = blue_pixel + noise
+        arr[0,0,:] = blue_pixel
+        arr[31,31,:] = blue_pixel
     else:
-        noise = np.random.randint(-8, 9, 3)
-        new_arr[0,31,:] = orange_pixel + noise
-
-    if bird_count in dot_group_1percent:
-        noise = np.random.randint(-8, 9, 3)
-        new_arr[0,0,:] = blue_pixel + noise
-        noise = np.random.randint(-8, 9, 3)
-        new_arr[0,31,:] = orange_pixel + noise
+        arr[0,31,:] = orange_pixel
+        arr[31,0,:] = orange_pixel
 
     save_name = os.path.join(args.out_dir, file_name)
     # save_name = f"./test.png"
 
-    new_arr = np.clip(new_arr, 0, 255).astype(np.uint8)
+    new_arr = np.clip(arr, 0, 255).astype(np.uint8)
     im = Image.fromarray(new_arr)
     im.convert('RGB').save(save_name)
     # input('check')

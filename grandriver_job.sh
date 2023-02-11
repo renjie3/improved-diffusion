@@ -5,9 +5,9 @@ echo $NEXT_JOB_ID > job_id.log
 
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False"
 
-DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine"
+DIFFUSION_FLAGS="--diffusion_steps 1000 --noise_schedule cosine"
 
-TRAIN_FLAGS="--save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 100000 --microbatch -1 --class_cond False --num_workers 4"
+TRAIN_FLAGS="--save_interval 5000 --lr 1e-4 --batch_size 256 --stop_steps 200000 --microbatch -1 --class_cond False --num_workers 4"
 
 ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002"
 
@@ -16,8 +16,8 @@ POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renj
 # SAMPLE_FLAGS="--batch_size 4 --num_samples 4 --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/66247912_1/ema_0.9999_300000.pt"
 
 
-GPU_ID='1, 2'
-MY_CMD="mpiexec -n 2 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar_train_plane $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
+GPU_ID='1'
+MY_CMD="mpiexec -n 1 python -u scripts/image_train.py --data_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar_train_cross_1percent $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh

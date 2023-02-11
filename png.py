@@ -80,7 +80,7 @@ def draw_dataset(input_path, out_dir, img_grid_num):
 
         sample_list = []
 
-        save_path = "{}/bird_{}.png".format(out_dir, i)
+        save_path = "{}/plane_{}.png".format(out_dir, i)
 
         for file_path in all_files[i::5]:
             # print(file_path)
@@ -121,6 +121,7 @@ def main():
     parser.add_argument('--in_dir', default='', type=str)
     parser.add_argument('--img_grid_num', default=10, type=int)
     parser.add_argument('--mode', default='npz2png', type=str)
+    parser.add_argument('--target_class', default='bird', type=str)
 
     # args parse
     args = parser.parse_args()
