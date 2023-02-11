@@ -19,7 +19,7 @@ ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 
 
 POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise"
 
-SAMPLE_FLAGS="--batch_size 128 --num_samples 2500 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model050000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/138/model050000"
+SAMPLE_FLAGS="--batch_size 128 --num_samples 1000 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/127/model045000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/127/model045000"
 
 JOB_INFO="train stepsize"
 # MYCOMMEND="mpiexec -n 4 python -u scripts/image_train.py --data_dir datasets/cifar_train_sky_blue $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
