@@ -41,6 +41,12 @@ def main():
             args.schedule_sampler, diffusion
         )
 
+    # '{}/{}/'.format(args.save_path, args.job_id)
+
+    print('{}/{}/'.format(args.save_path, args.job_id))
+    if not os.path.exists('{}/{}/'.format(args.save_path, args.job_id)):
+        os.mkdir('{}/{}/'.format(args.save_path, args.job_id))
+
     resume_step = 0
     if args.resume_checkpoint:
         resume_step = parse_resume_step_from_filename(args.resume_checkpoint)
@@ -159,11 +165,11 @@ def main():
             and not (step + resume_step) % args.save_interval
         ):
             logger.log("saving model...")
-            save_model(mp_trainer, opt, step + resume_step)
+            save_model(mp_trainer, opt, step + resume_step, '{}/{}/'.format(args.save_path, args.job_id))
 
     if dist.get_rank() == 0:
         logger.log("saving model...")
-        save_model(mp_trainer, opt, step + resume_step)
+        save_model(mp_trainer, opt, step + resume_step, '{}/{}/'.format(args.save_path, args.job_id))
     dist.barrier()
 
 
@@ -173,13 +179,13 @@ def set_annealed_lr(opt, base_lr, frac_done):
         param_group["lr"] = lr
 
 
-def save_model(mp_trainer, opt, step):
+def save_model(mp_trainer, opt, step, save_path):
     if dist.get_rank() == 0:
         th.save(
             mp_trainer.master_params_to_state_dict(mp_trainer.master_params),
-            os.path.join(logger.get_dir(), f"model{step:06d}.pt"),
+            os.path.join(save_path, f"model{step:06d}.pt"),
         )
-        th.save(opt.state_dict(), os.path.join(logger.get_dir(), f"opt{step:06d}.pt"))
+        th.save(opt.state_dict(), os.path.join(save_path, f"opt{step:06d}.pt"))
 
 
 def compute_top_k(logits, labels, k, reduction="mean"):
@@ -216,6 +222,8 @@ def create_argparser():
         eval_interval=5,
         save_interval=10000,
         image_size = 32,
+        job_id = "local",
+        save_path='./results',
     )
     defaults.update(classifier_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

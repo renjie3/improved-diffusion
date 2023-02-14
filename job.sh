@@ -21,9 +21,12 @@ POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renj
 
 SAMPLE_FLAGS="--batch_size 128 --num_samples 1000 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/127/model045000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/127/model045000"
 
+CLASSIFIER_FLAGS="--iterations 300000 --anneal_lr True --batch_size 256 --lr 3e-4 --save_interval 10000 --weight_decay 0.05 --image_size 32 --classifier_depth 2 --classifier_width 128 --classifier_pool attention --classifier_resblock_updown True --classifier_use_scale_shift_norm True"
+
 JOB_INFO="train stepsize"
 # MYCOMMEND="mpiexec -n 4 python -u scripts/image_train.py --data_dir datasets/cifar_train_sky_blue $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
-MYCOMMEND="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
+# MYCOMMEND="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
+MYCOMMEND="python -u scripts/classifier_train.py --data_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train $CLASSIFIER_FLAGS"
 
 MYCOMMEND2="python3 test.py -gpu_id 0 -model 1 -attack 1 --pgd_norm 7 -batch_size 50 -path Final/VANILLA_62162198_1/iter_50 --alpha 1000 --num_iter 100 --num_stop 2000 --test_subset --seed 1"
 
