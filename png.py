@@ -132,6 +132,8 @@ def main():
         # save_path = os.path.join(args.out_dir, f"0000.png")
         save_path = '{}.png'.format(args.in_dir)
         npz2png(data['arr_0'], save_path, args.img_grid_num, )
+        if 'arr_1' in data:
+            print(data['arr_1'])
     elif args.mode == 'draw_dataset':
         draw_dataset(args.in_dir, args.out_dir, args.img_grid_num, )
 
