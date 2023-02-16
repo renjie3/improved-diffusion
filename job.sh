@@ -6,12 +6,12 @@ cd $MY_JOB_ROOT_PATH
 
 MYTIME="3:59:00"
 MYNTASKS="1"
-MYCPU="4"
+MYCPU="5"
 MYGRES="gpu:v100s:1"
 
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False"
 
-DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine"
+DIFFUSION_FLAGS="--diffusion_steps 1000 --noise_schedule cosine"
 
 TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 128 --stop_steps 300000 --microbatch -1 --class_cond False --num_workers 4"
 
@@ -19,14 +19,17 @@ ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 
 
 POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise"
 
-SAMPLE_FLAGS="--batch_size 128 --num_samples 1000 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/127/model045000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/127/model045000"
+SAMPLE_FLAGS="--batch_size 100 --num_samples 100 --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/ema_0.9999_100000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/ema_0.9999_100000"
 
 CLASSIFIER_FLAGS="--iterations 300000 --anneal_lr True --batch_size 256 --lr 3e-4 --save_interval 10000 --weight_decay 0.05 --image_size 32 --classifier_depth 2 --classifier_width 128 --classifier_pool attention --classifier_resblock_updown True --classifier_use_scale_shift_norm True"
 
+CLASSIFIER_SAMPLE_FLAGS="--batch_size 16  --classifier_depth 2 --num_samples 16 --classifier_scale 1.0 --classifier_width 128 --classifier_pool attention --classifier_resblock_updown True --classifier_use_scale_shift_norm True --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/ema_0.9999_100000.pt --classifier_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/150/model150000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/ema_0.9999_100000"
+
 JOB_INFO="train stepsize"
 # MYCOMMEND="mpiexec -n 4 python -u scripts/image_train.py --data_dir datasets/cifar_train_sky_blue $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
-# MYCOMMEND="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
-MYCOMMEND="python -u scripts/classifier_train.py --data_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train $CLASSIFIER_FLAGS"
+MYCOMMEND="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
+# MYCOMMEND="python -u scripts/classifier_train.py --data_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train $CLASSIFIER_FLAGS"
+# MYCOMMEND="python -u scripts/classifier_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $CLASSIFIER_SAMPLE_FLAGS"
 
 MYCOMMEND2="python3 test.py -gpu_id 0 -model 1 -attack 1 --pgd_norm 7 -batch_size 50 -path Final/VANILLA_62162198_1/iter_50 --alpha 1000 --num_iter 100 --num_stop 2000 --test_subset --seed 1"
 

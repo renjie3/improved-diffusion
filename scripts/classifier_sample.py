@@ -31,6 +31,11 @@ def main():
     dist_util.setup_dist()
     logger.configure()
 
+    args.save_path = f"{args.out_dir}_{args.job_id}"
+
+    if not os.path.exists(args.save_path):
+        os.mkdir(args.save_path)
+
     logger.log("creating model and diffusion...")
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
@@ -106,11 +111,11 @@ def main():
         label_arr = label_arr[: args.num_samples]
         if dist.get_rank() == 0:
             shape_str = "x".join([str(x) for x in arr.shape])
-            out_path = os.path.join(args.out_dir, f"samples_{shape_str}_{class_i}.npz")
+            out_path = os.path.join(args.save_path, f"samples_{shape_str}_{class_i}.npz")
             logger.log(f"saving to {out_path}")
             np.savez(out_path, arr, label_arr)
 
-            save_path = os.path.join(args.out_dir, f"0000_{class_i}.png")
+            save_path = os.path.join(args.save_path, f"0000_{class_i}.png")
             npz2png(arr, save_path, int(args.num_samples ** 0.5))
 
     dist.barrier()
