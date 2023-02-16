@@ -6,6 +6,7 @@ import blobfile as bf
 from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
+import torch
 
 
 def load_data(
@@ -17,6 +18,8 @@ def load_data(
     deterministic=False,
     random_crop=False,
     random_flip=True,
+    poisoned=False,
+    poison_path='',
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.
@@ -54,6 +57,8 @@ def load_data(
         num_shards=MPI.COMM_WORLD.Get_size(),
         random_crop=random_crop,
         random_flip=random_flip,
+        poisoned=poisoned,
+        poison_path=poison_path,
     )
     if deterministic:
         loader = DataLoader(
@@ -89,6 +94,8 @@ class ImageDataset(Dataset):
         num_shards=1,
         random_crop=False,
         random_flip=True,
+        poisoned=False,
+        poison_path='',
     ):
         super().__init__()
         self.resolution = resolution
@@ -96,6 +103,10 @@ class ImageDataset(Dataset):
         self.local_classes = None if classes is None else classes[shard:][::num_shards]
         self.random_crop = random_crop
         self.random_flip = random_flip
+        self.poisoned = poisoned
+        if poisoned:
+            self.perturb = torch.load(poison_path).cpu().numpy()
+            print('poison loaded at {}!!!'.format(poison_path))
 
     def __len__(self):
         return len(self.local_images)
@@ -116,11 +127,15 @@ class ImageDataset(Dataset):
             arr = arr[:, ::-1]
 
         arr = arr.astype(np.float32) / 127.5 - 1
+        arr = np.transpose(arr, [2, 0, 1])
+        if self.poisoned:
+            arr += self.perturb[idx] * 2
+            arr = np.clip(arr, -1, 1)
 
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
-        return np.transpose(arr, [2, 0, 1]), out_dict
+        return arr, out_dict
 
 
 def center_crop_arr(pil_image, image_size):

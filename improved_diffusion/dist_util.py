@@ -62,6 +62,8 @@ def load_state_dict(path, **kwargs):
             data = f.read()
     else:
         data = None
+        # with bf.BlobFile(path, "rb") as f:
+        #     data = f.read()
     data = MPI.COMM_WORLD.bcast(data)
     return th.load(io.BytesIO(data), **kwargs)
 

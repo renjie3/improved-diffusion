@@ -13,3 +13,4 @@ cmd/
 cancel.sh
 test.py
 local_cmd.sh
+data/

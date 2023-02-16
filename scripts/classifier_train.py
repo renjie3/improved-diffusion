@@ -83,6 +83,8 @@ def main():
         image_size=args.image_size,
         class_cond=True,
         random_crop=True,
+        poisoned=args.poisoned,
+        poison_path=args.poison_path,
     )
     if args.val_data_dir:
         val_data = load_data(
@@ -222,6 +224,8 @@ def create_argparser():
         eval_interval=5,
         save_interval=10000,
         image_size = 32,
+        poisoned=False,
+        poison_path='',
         job_id = "local",
         save_path='./results',
     )
