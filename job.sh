@@ -4,16 +4,16 @@ MY_JOB_ROOT_PATH=`pwd`
 # echo $MY_JOB_ROOT_PATH
 cd $MY_JOB_ROOT_PATH
 
-MYTIME="3:59:00"
-MYNTASKS="1"
+MYTIME="47:59:00"
+MYNTASKS="2"
 MYCPU="5"
-MYGRES="gpu:v100s:1"
+MYGRES="gpu:v100:2"
 
 MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3 --learn_sigma False"
 
 DIFFUSION_FLAGS="--diffusion_steps 1000 --noise_schedule cosine"
 
-TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 128 --stop_steps 300000 --microbatch -1 --class_cond False --num_workers 4"
+TRAIN_FLAGS="--save_interval 2500 --lr 1e-4 --batch_size 256 --stop_steps 250000 --microbatch -1 --class_cond False --num_workers 4 --resume_checkpoint /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/model100000.pt"
 
 ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002"
 
@@ -26,8 +26,8 @@ CLASSIFIER_FLAGS="--iterations 300000 --anneal_lr True --batch_size 256 --lr 3e-
 CLASSIFIER_SAMPLE_FLAGS="--batch_size 16  --classifier_depth 2 --num_samples 16 --classifier_scale 1.0 --classifier_width 128 --classifier_pool attention --classifier_resblock_updown True --classifier_use_scale_shift_norm True --model_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/ema_0.9999_100000.pt --classifier_path /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/150/model150000.pt --out_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/results/4979083_1/ema_0.9999_100000"
 
 JOB_INFO="train stepsize"
-# MYCOMMEND="mpiexec -n 4 python -u scripts/image_train.py --data_dir datasets/cifar_train_sky_blue $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
-MYCOMMEND="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
+MYCOMMEND="mpiexec -n 2 python -u scripts/image_train.py --data_dir datasets/cifar_train_sky_blue $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
+# MYCOMMEND="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
 # MYCOMMEND="python -u scripts/classifier_train.py --data_dir /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train $CLASSIFIER_FLAGS"
 # MYCOMMEND="python -u scripts/classifier_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $CLASSIFIER_SAMPLE_FLAGS"
 
