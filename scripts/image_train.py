@@ -144,6 +144,7 @@ def main():
             adv_step=args.adv_step,
             adv_epsilon=args.adv_epsilon,
             adv_alpha=args.adv_alpha,
+            adv_loss_type=args.adv_loss_type,
         )
         trainer.run_adv()
 
@@ -181,6 +182,7 @@ def create_argparser():
         adv_step=20,
         adv_epsilon=0.0628,
         adv_alpha=0.00628,
+        adv_loss_type="forward_bachword_loss",
         save_forward_clean_sample=False,
         single_target_image_id=10000,
         poisoned=False,

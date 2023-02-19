@@ -65,7 +65,7 @@ def load_data(
 
 
 def load_adv_data(
-    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_workers=4, 
+    *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, mode="train", adv_noise_num=5000, output_class=False, single_target_image_id=10000, num_workers=4, hidden_class=0,
 ):
     """
     For a dataset, create a generator over (images, kwargs) pairs.

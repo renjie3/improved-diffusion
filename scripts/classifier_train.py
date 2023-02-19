@@ -83,6 +83,7 @@ def main():
         image_size=args.image_size,
         class_cond=True,
         random_crop=True,
+        random_padding_crop=args.random_padding_crop,
         poisoned=args.poisoned,
         poison_path=args.poison_path,
     )
@@ -226,6 +227,7 @@ def create_argparser():
         image_size = 32,
         poisoned=False,
         poison_path='',
+        random_padding_crop=False,
         job_id = "local",
         save_path='./results',
     )

@@ -53,6 +53,7 @@ class AdvLoop:
         adv_epsilon=0.0628,
         adv_alpha=0.00628,
         target_image=None,
+        adv_loss_type="mse_attack_noisefunction",
     ):
         self.model = model
         self.diffusion = diffusion
@@ -93,6 +94,7 @@ class AdvLoop:
         self.adv_epsilon=adv_epsilon
         self.adv_alpha=adv_alpha
         self.single_target_image = target_image
+        self.adv_loss_type = adv_loss_type
 
         self._load_and_sync_parameters()
         if self.use_fp16:
@@ -330,7 +332,7 @@ class AdvLoop:
                         # print('eot_gaussian_num: ', j)
                         gaussian_noise = all_gaussian_noise[i*eot_gaussian_num + j]
                         with th.enable_grad():
-                            loss = self.adv_loss(x_adv, cond, adv_loss_type="mse_attack_noisefunction", target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
+                            loss = self.adv_loss(x_adv, cond, adv_loss_type=self.adv_loss_type, target_image=target_image, gaussian_noise=gaussian_noise, t=t, weights=weights)
                         grad = th.autograd.grad(loss, [x_adv])[0]
                         accumulated_grad += grad
                 x_adv = x_adv.detach() - self.adv_alpha * th.sign(accumulated_grad.detach())
@@ -438,6 +440,42 @@ class AdvLoop:
 
                 loss = (losses["loss"] * weights).mean()
                 
+                return loss
+
+        elif adv_loss_type == "negative_forward_bachword_loss":
+            zero_grad(self.model_params)
+            for i in range(0, batch.shape[0], self.microbatch):
+                micro = batch[i : i + self.microbatch].to(dist_util.dev())
+                if "y" in cond.keys():
+                    micro_cond = {
+                        "y": cond["y"][i : i + self.microbatch].to(dist_util.dev())
+                    }
+                else:
+                    micro_cond = {}
+                last_batch = (i + self.microbatch) >= batch.shape[0] # the ending microbatch, not the microbatch before current one.
+                t, weights = self.schedule_sampler.sample(micro.shape[0], dist_util.dev())
+
+                compute_losses = functools.partial(
+                    self.diffusion.training_losses,
+                    self.ddp_model,
+                    micro,
+                    t,
+                    model_kwargs=micro_cond,
+                )
+
+                if last_batch or not self.use_ddp:
+                    losses = compute_losses()
+                else:
+                    with self.ddp_model.no_sync():
+                        losses = compute_losses()
+
+                if isinstance(self.schedule_sampler, LossAwareSampler):
+                    self.schedule_sampler.update_with_local_losses(
+                        t, losses["loss"].detach()
+                    )
+
+                loss = - (losses["loss"] * weights).mean()
+                # input("check it negative_forward_bachword_loss")
                 return loss
 
     def _get_adv_noise(self, idx):

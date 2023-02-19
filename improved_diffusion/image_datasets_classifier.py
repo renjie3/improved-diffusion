@@ -18,6 +18,7 @@ def load_data(
     deterministic=False,
     random_crop=False,
     random_flip=True,
+    random_padding_crop=False,
     poisoned=False,
     poison_path='',
 ):
@@ -56,6 +57,7 @@ def load_data(
         shard=MPI.COMM_WORLD.Get_rank(),
         num_shards=MPI.COMM_WORLD.Get_size(),
         random_crop=random_crop,
+        random_padding_crop=random_padding_crop,
         random_flip=random_flip,
         poisoned=poisoned,
         poison_path=poison_path,
@@ -93,6 +95,7 @@ class ImageDataset(Dataset):
         shard=0,
         num_shards=1,
         random_crop=False,
+        random_padding_crop=False,
         random_flip=True,
         poisoned=False,
         poison_path='',
@@ -103,6 +106,7 @@ class ImageDataset(Dataset):
         self.local_classes = None if classes is None else classes[shard:][::num_shards]
         self.random_crop = random_crop
         self.random_flip = random_flip
+        self.random_padding_crop = random_padding_crop
         self.poisoned = poisoned
         if poisoned:
             self.perturb = torch.load(poison_path).cpu().numpy()
@@ -119,7 +123,10 @@ class ImageDataset(Dataset):
         pil_image = pil_image.convert("RGB")
 
         if self.random_crop:
-            arr = random_crop_arr(pil_image, self.resolution)
+            if self.random_padding_crop:
+                arr = random_padding_crop_arr(pil_image, self.resolution, padding=4)
+            else:
+                arr = random_crop_arr(pil_image, self.resolution)
         else:
             arr = center_crop_arr(pil_image, self.resolution)
 
@@ -179,4 +186,24 @@ def random_crop_arr(pil_image, image_size, min_crop_frac=0.85, max_crop_frac=1.0
     arr = np.array(pil_image)
     crop_y = random.randrange(arr.shape[0] - image_size + 1)
     crop_x = random.randrange(arr.shape[1] - image_size + 1)
+    return arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
+
+def random_padding_crop_arr(pil_image, image_size, padding=4):
+    def add_margin(pil_img, top, right, bottom, left, color):
+        width, height = pil_img.size
+        new_width = width + right + left
+        new_height = height + top + bottom
+        result = Image.new(pil_img.mode, (new_width, new_height), color)
+        result.paste(pil_img, (left, top))
+        return result
+
+    pil_image = add_margin(pil_image, padding, padding, padding, padding, (0, 0, 0))
+
+    # pil_image.save('./test.jpg', quality=95)
+    # input("check")
+
+    arr = np.array(pil_image)
+    crop_y = random.randrange(arr.shape[0] - image_size + 1)
+    crop_x = random.randrange(arr.shape[1] - image_size + 1)
+    
     return arr[crop_y : crop_y + image_size, crop_x : crop_x + image_size]
