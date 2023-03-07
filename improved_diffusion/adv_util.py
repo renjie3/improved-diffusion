@@ -361,6 +361,94 @@ class AdvLoop:
 
         self._save_adv_noise()
 
+    def run_adv_tv(self):
+        if not os.path.exists(self.get_blob_logdir()):
+            os.mkdir(self.get_blob_logdir())
+        self.ddp_model.eval()
+        # set the model parameters to be fixed
+        for param in self.ddp_model.parameters():
+            param.requires_grad = False
+
+        for _idx, (batch, cond) in enumerate(self.data):
+            logger.log("Batch id {}".format(_idx))
+            # print('check 1')
+            # print(cond)
+            # continue
+
+            batch_classes = cond['output_classes']
+            batch_idx = cond['idx']
+            HIDDEN_CLASS = 0
+            hidden_idx_in_batch = batch_classes == HIDDEN_CLASS # select all the samples that belongs to birds
+            batch = batch[hidden_idx_in_batch]
+            batch_idx = batch_idx[hidden_idx_in_batch]
+            x_natural = batch.to(dist_util.dev())
+
+            if batch_idx.shape[0] == 0:
+                continue
+            
+            batch_adv_noise = self._get_adv_noise(batch_idx)
+
+            x_adv = (x_natural.detach() + batch_adv_noise.detach()).float()
+            loop_bar = tqdm(range(self.adv_step))
+            for _ in loop_bar:
+                loop_bar.set_description("Batch [{}/{}]".format(_idx, len(self.data) // 4))
+                x_adv.requires_grad_()
+                with th.enable_grad():
+                    loss = self.total_variation(x_adv)
+                grad = th.autograd.grad(loss, [x_adv])[0]
+                # print(loss.item())
+                # input("check")
+                x_adv = x_adv.detach() + self.adv_alpha * th.sign(grad.detach())
+                x_adv = th.min(th.max(x_adv, x_natural - self.adv_epsilon), x_natural + self.adv_epsilon)
+                x_adv = th.clamp(x_adv, -1.0, 1.0)
+
+            new_adv_noise = x_adv.detach() - x_natural.detach()
+
+            self._set_adv_noise(batch_idx, new_adv_noise)
+
+        self._save_adv_noise()
+
+    def total_variation(self, img, reduction = "mean"):
+
+        # print(img.shape)
+        # input("check")
+
+        # pixel_dif1 = th.pow(img[:, :, 1:, :] - img[:, :, :-1, :], 2)
+        # pixel_dif2 = th.pow(img[:, :, :, 1:] - img[:, :, :, :-1], 2)
+        # pixel_dif1 = img[:, :, 1:, :] - img[:, :, :-1, :]
+        # pixel_dif2 = img[:, :, :, 1:] - img[:, :, :, :-1]
+
+        img_list = []
+
+        for i in range(3):
+            for j in range(3):
+                if i == 2 and j == 2:
+                    img_list.append(img[:, :, i:, j:])
+                elif i == 2:
+                    img_list.append(img[:, :, i:, j:-(2-j)])
+                elif j == 2:
+                    img_list.append(img[:, :, i:-(2-i), j:])
+                else:
+                    img_list.append(img[:, :, i:-(2-i), j:-(2-j)])
+
+        img_list = th.stack(img_list, dim=4)
+        print(img_list.shape)
+        var = th.var(img_list, dim=4)
+
+        # res1 = pixel_dif1.abs()
+        # res2 = pixel_dif2.abs()
+
+        # res = res1[:, :, :, :-1] * res2[:, :, :-1, :] / (res1[:, :, :, :-1] + res2[:, :, :-1, :])
+
+        # if reduction == "mean":
+        #     res1 = res1.mean()
+        #     res2 = res2.mean()
+        # elif reduction == "sum":
+        #     res1 = res1.sum()
+        #     res2 = res2.sum()
+
+        return var.mean()
+
     def adv_loss(self, batch, cond, adv_loss_type="mse_attack_noisefunction", target_image=None, gaussian_noise=None, t=None, weights=None):
         if adv_loss_type == "mse_attack_noisefunction":
             if gaussian_noise is None:

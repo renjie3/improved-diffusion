@@ -181,25 +181,19 @@ def test():
 
         # print(predicted)
 
-    bird_sample = []
-    other_sample = []
+    classes_name = ['bird', 'car', 'cat', 'deer', 'dog', 'frog', 'horse', 'plane', 'ship', 'truck']
+
+    samples = [[] for _ in range(10)]
     for i in range(len(data)):
-        if predicted[i] == 0:
-            bird_sample.append(data[i])
-        else:
-            other_sample.append(data[i])
+        samples[predicted[i]].append(data[i])
 
-    bird_sample = np.stack(bird_sample, axis=0).astype(np.uint8)
-    grid_image = make_grid(torch.tensor(bird_sample), int(np.sqrt(len(bird_sample))) + 1, 2)#.float()
+    for i in range(10):
+        if len(samples[i]) > 0:
+            other_sample = np.stack(samples[i], axis=0).astype(np.uint8)
+            grid_image = make_grid(torch.tensor(other_sample), int(np.sqrt(len(other_sample))) + 1, 2)#.float()
 
-    im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
-    im.convert('RGB').save(args.test_dir.replace(".npz", "bird.png"))
-
-    other_sample = np.stack(other_sample, axis=0).astype(np.uint8)
-    grid_image = make_grid(torch.tensor(other_sample), int(np.sqrt(len(other_sample))) + 1, 2)#.float()
-
-    im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
-    im.convert('RGB').save(args.test_dir.replace(".npz", "other.png"))
+            im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
+            im.convert('RGB').save(args.test_dir.replace(".npz", f"{classes_name[i]}_{len(other_sample)}.png"))
         
     return None
 

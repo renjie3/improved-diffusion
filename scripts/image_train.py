@@ -146,7 +146,10 @@ def main():
             adv_alpha=args.adv_alpha,
             adv_loss_type=args.adv_loss_type,
         )
-        trainer.run_adv()
+        if args.adv_tv:
+            trainer.run_adv_tv()
+        else:
+            trainer.run_adv()
 
 # improved has three tricks: 
 # learnable variance (Loss), MSE may be original
@@ -190,6 +193,7 @@ def create_argparser():
         hidden_class=0,
         stop_steps=0,
         num_workers=4,
+        adv_tv=False,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

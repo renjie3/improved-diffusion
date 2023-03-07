@@ -4,7 +4,6 @@ from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
 
-
 def load_data(
     *, data_dir, batch_size, image_size, class_cond=False, deterministic=False, output_index=False, output_class=False, mode="train", poisoned=False, poisoned_path='', hidden_class=0, num_workers=4, 
 ):
@@ -188,7 +187,6 @@ class ImageDataset(Dataset):
         if self.poisoned:
             if self.output_classes[idx] == self.hidden_class:
                 arr += self.perturb[idx]
-                # input('check here')
 
         out_dict = {}
         if self.local_classes is not None:

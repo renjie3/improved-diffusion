@@ -34,6 +34,26 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
+def total_variation(img, reduction = "mean"):
+
+    # print(img.shape)
+    # input("check")
+
+    pixel_dif1 = img[1:, :, :] - img[:-1, :, :]
+    pixel_dif2 = img[:, 1:, :] - img[:, :-1, :]
+
+    res1 = np.absolute(pixel_dif1)
+    res2 = np.absolute(pixel_dif2)
+
+    if reduction == "mean":
+        res1 = res1.mean()
+        res2 = res2.mean()
+    elif reduction == "sum":
+        res1 = res1.sum()
+        res2 = res2.sum()
+
+    return res1 + res2
+
 def main():
     # matplotlib.image.imsave('name.png', array)
     if not os.path.exists(args.out_dir):
@@ -73,12 +93,23 @@ def main():
     else:
         perturb = np.load("{}.npy".format(args.poisoned_path))
         perturb_01range = perturb * 0.5
+        print(perturb_01range.shape)
         perturbmean = np.mean(perturb_01range, axis=0, keepdims=True)
-        print(np.mean(np.abs(perturbmean - perturb_01range)))
+        # print(perturbmean)
+        # print(perturbmean.shape)
+        print(np.min(perturb_01range), np.max(perturb_01range))
+        print(np.mean(np.abs(perturb_01range)))
+        # input("check")
+
+        sum_tv = 0
+        count = 0
+        
         all_files = _list_image_files_recursively(args.in_dir)
         if not os.path.exists(args.out_dir):
             os.mkdir(args.out_dir)
         for i in range(len(perturb)):
+            # if i > 100:
+            #     break
             path = all_files[i]
             with bf.BlobFile(path, "rb") as f:
                 pil_image = Image.open(f)
@@ -91,6 +122,9 @@ def main():
             
             poisoned_arr = (arr + perturb[i].transpose(1,2,0)) * 0.5 + 0.5
 
+            sum_tv += total_variation(poisoned_arr)
+            count += 1
+
             filename = os.path.join(args.out_dir, f"{i:05d}.png")
             matplotlib.image.imsave(filename, poisoned_arr)
 
@@ -99,6 +133,7 @@ def main():
             matplotlib.image.imsave(filename, arr)
 
             # input('check')
+        print(sum_tv / count)
 
 
 if __name__ == "__main__":

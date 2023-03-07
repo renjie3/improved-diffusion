@@ -6,7 +6,26 @@ import blobfile as bf
 from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
-import torch
+import torch as th
+from improved_diffusion import dist_util
+
+class AdvPerturbation():
+    def __init__(self, adv_noise_num, image_size, save_path):
+        adv_noise = np.zeros([adv_noise_num, 3, image_size, image_size])
+        self.adv_noise = adv_noise
+        self.save_path = save_path
+
+    def get_adv_noise(self, idx):
+        adv_noise_numpy = self.adv_noise[idx]
+        return th.tensor(adv_noise_numpy).to(dist_util.dev())
+
+    def set_adv_noise(self, idx, batch_noise):
+        self.adv_noise[idx] = batch_noise.cpu().numpy()
+        # return th.tensor(adv_noise_numpy).to(dist_util.dev())
+
+    def save_adv_noise(self, ):
+        with open(bf.join(self.save_path, "adv_noise.npy"), "wb") as f:
+            np.save(f, self.adv_noise)
 
 
 def load_data(
@@ -73,6 +92,69 @@ def load_data(
     while True:
         yield from loader
 
+def load_data_dataloader(
+    *,
+    data_dir,
+    batch_size,
+    image_size,
+    class_cond=False,
+    deterministic=False,
+    random_crop=False,
+    random_flip=True,
+    random_padding_crop=False,
+    poisoned=False,
+    poison_path='',
+):
+    """
+    For a dataset, create a generator over (images, kwargs) pairs.
+
+    Each images is an NCHW float tensor, and the kwargs dict contains zero or
+    more keys, each of which map to a batched Tensor of their own.
+    The kwargs dict can be used for class labels, in which case the key is "y"
+    and the values are integer tensors of class labels.
+
+    :param data_dir: a dataset directory.
+    :param batch_size: the batch size of each returned pair.
+    :param image_size: the size to which images are resized.
+    :param class_cond: if True, include a "y" key in returned dicts for class
+                       label. If classes are not available and this is true, an
+                       exception will be raised.
+    :param deterministic: if True, yield results in a deterministic order.
+    :param random_crop: if True, randomly crop the images for augmentation.
+    :param random_flip: if True, randomly flip the images for augmentation.
+    """
+    if not data_dir:
+        raise ValueError("unspecified data directory")
+    all_files = _list_image_files_recursively(data_dir)
+    classes = None
+    if class_cond:
+        # Assume classes are the first part of the filename,
+        # before an underscore.
+        class_names = [bf.basename(path).split("_")[0] for path in all_files]
+        sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+        classes = [sorted_classes[x] for x in class_names]
+    dataset = ImageDataset(
+        image_size,
+        all_files,
+        classes=classes,
+        shard=MPI.COMM_WORLD.Get_rank(),
+        num_shards=MPI.COMM_WORLD.Get_size(),
+        random_crop=random_crop,
+        random_padding_crop=random_padding_crop,
+        random_flip=random_flip,
+        poisoned=poisoned,
+        poison_path=poison_path,
+    )
+    if deterministic:
+        loader = DataLoader(
+            dataset, batch_size=batch_size, shuffle=False, num_workers=1, drop_last=True
+        )
+    else:
+        loader = DataLoader(
+            dataset, batch_size=batch_size, shuffle=True, num_workers=1, drop_last=True
+        )
+    return loader
+
 
 def _list_image_files_recursively(data_dir):
     results = []
@@ -109,7 +191,7 @@ class ImageDataset(Dataset):
         self.random_padding_crop = random_padding_crop
         self.poisoned = poisoned
         if poisoned:
-            self.perturb = torch.load(poison_path).cpu().numpy()
+            self.perturb = th.load(poison_path).cpu().numpy()
             print('poison loaded at {}!!!'.format(poison_path))
 
     def __len__(self):
@@ -142,6 +224,7 @@ class ImageDataset(Dataset):
         out_dict = {}
         if self.local_classes is not None:
             out_dict["y"] = np.array(self.local_classes[idx], dtype=np.int64)
+        out_dict["idx"] = np.array(idx, dtype=np.int64)
         return arr, out_dict
 
 

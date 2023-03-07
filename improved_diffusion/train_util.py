@@ -175,13 +175,17 @@ class TrainLoop:
             if self.step > self.stop_steps:
                 break
             batch, cond = next(self.data)
+            
+            # from torchvision.utils import save_image, make_grid
             # print(batch.shape)
+            # save_img = (batch + 1) / 2.0
+            # save_image(make_grid(save_img, nrow=10),"test.png")
             # input('check')
             self.run_step(batch, cond)
             if self.step % self.log_interval == 0:
                 logger.dumpkvs()
             if self.step % self.save_interval == 0:
-                if self.step == self.stop_steps:
+                if self.step == self.stop_steps or self.step > 5:
                     self.save(save_ema=True, save_opt=True)
                 else:
                     self.save()
