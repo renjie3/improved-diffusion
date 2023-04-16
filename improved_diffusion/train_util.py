@@ -184,14 +184,14 @@ class TrainLoop:
                 if self.step == self.stop_steps:
                     self.save(save_ema=True, save_opt=True)
                 else:
-                    self.save()
+                    self.save(save_ema=True, save_opt=True)
                 # Run for a finite amount of time in integration tests.
                 if os.environ.get("DIFFUSION_TRAINING_TEST", "") and self.step > 0:
                     return
             self.step += 1
         # Save the last checkpoint if it wasn't already saved.
         if (self.step - 1) % self.save_interval != 0:
-            self.save()
+            self.save(save_ema=True, save_opt=True)
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
