@@ -3,6 +3,7 @@ import blobfile as bf
 from mpi4py import MPI
 import numpy as np
 from torch.utils.data import DataLoader, Dataset
+import pickle
 
 
 def load_data(
@@ -201,23 +202,51 @@ class ImageDataset(Dataset):
 
 
 class SimpleImageDataset(Dataset):
-    def __init__(self, image_paths, transform):
+    def __init__(self, image_paths, transform, use_numpy_file=False):
         super().__init__()
-        self.local_images = image_paths
+        self.use_numpy_file = use_numpy_file
         self.transform = transform
-        class_names = [bf.basename(path).split("_")[0] for path in image_paths]
-        sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
-        classes = [sorted_classes[x] for x in class_names]
-        self.local_classes = classes
+        if self.use_numpy_file:
+            # self.local_classes = pickle.load(image_paths.replace("uint8.npy", "label.pkl"))
+            with open(image_paths.replace("uint8.npy", "label.pkl"),'rb') as out_data:
+                self.local_classes = pickle.load(out_data)
+            self.numpy_data = np.load(image_paths)
+        else:
+            self.local_images = image_paths
+            class_names = [bf.basename(path).split("_")[0] for path in image_paths]
+            sorted_classes = {x: i for i, x in enumerate(sorted(set(class_names)))}
+            classes = [sorted_classes[x] for x in class_names]
+            self.local_classes = classes
+
+        # pngs = []
+        # for path in image_paths:
+        #     with bf.BlobFile(path, "rb") as f:
+        #         pil_image = Image.open(f)
+        #         pil_image.load()
+
+        #     pil_image = pil_image.convert("RGB")
+        #     arr = np.array(pil_image)
+        #     pngs.append(arr)
+
+        # pngs = np.stack(pngs, axis=0)
+        # np.save('./datasets/cifar10_test_uint8.npy', pngs)
+
+        # with open('cifar10_test_label.pkl','wb') as in_data:
+        #     pickle.dump(self.local_classes,in_data,pickle.HIGHEST_PROTOCOL)
+
+        # exit()
 
     def __len__(self):
-        return len(self.local_images)
+        return len(self.local_classes)
 
     def __getitem__(self, idx):
-        path = self.local_images[idx]
-        with bf.BlobFile(path, "rb") as f:
-            pil_image = Image.open(f)
-            pil_image.load()
+        if self.use_numpy_file:
+            pil_image = Image.fromarray(self.numpy_data[idx])
+        else:
+            path = self.local_images[idx]
+            with bf.BlobFile(path, "rb") as f:
+                pil_image = Image.open(f)
+                pil_image.load()
 
         pil_image = pil_image.convert("RGB")
 

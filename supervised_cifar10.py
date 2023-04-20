@@ -15,6 +15,7 @@ parser.add_argument('--adv_alpha', default=0.8, type=float)
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--training_epoch', default=100, type=int)
 parser.add_argument('--num_workers', default=4, type=int)
+parser.add_argument('--use_numpy_file', action='store_true', default=False)
 parser.add_argument('--local', default='', type=str, help='The gpu number used on developing node.')
 parser.add_argument('--arch', default='resnet18', type=str, help='load_model_path')
 parser.add_argument('--test_dir', default="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_test", type=str)
@@ -269,15 +270,21 @@ if __name__ == '__main__':
 
     save_name_pre = "local_supervised_class{}_{}".format(args.num_class, args.job_id)
 
-    train_files = _list_image_files_recursively(args.train_dir)
-    train_set = ImageDataset(train_files, transform_train)
+    if not args.use_numpy_file:
+        train_files = _list_image_files_recursively(args.train_dir)
+        train_set = ImageDataset(train_files, transform_train)
+    else:
+        train_set = ImageDataset(args.train_dir, transform_train, use_numpy_file=args.use_numpy_file)
     # print(train_set[0][0].shape)
     trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
     if args.mode != 'test':
-        test_files = _list_image_files_recursively(args.test_dir)
-        # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
-        test_set = ImageDataset(test_files, transform_test)
+        if not args.use_numpy_file:
+            test_files = _list_image_files_recursively(args.test_dir)
+            # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
+            test_set = ImageDataset(test_files, transform_test)
+        else:
+            test_set = ImageDataset(args.test_dir, transform_test, use_numpy_file=args.use_numpy_file)
         testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Model
