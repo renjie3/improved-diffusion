@@ -13,6 +13,7 @@ parser.add_argument('--adv_epsilon', default=8, type=int)
 parser.add_argument('--adv_step', default=20, type=int)
 parser.add_argument('--adv_alpha', default=0.8, type=float)
 parser.add_argument('--batch_size', default=128, type=int)
+parser.add_argument('--training_epoch', default=100, type=int)
 parser.add_argument('--local', default='', type=str, help='The gpu number used on developing node.')
 parser.add_argument('--arch', default='resnet18', type=str, help='load_model_path')
 parser.add_argument('--test_dir', default="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_test", type=str)
@@ -88,7 +89,7 @@ def train(epoch, optimizer):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, 100, train_loss/(batch_count), 100.*correct/total))
+        train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, args.training_epoch, train_loss/(batch_count), 100.*correct/total))
 
     return train_loss/(batch_count), 100.*correct/total
 
@@ -163,7 +164,7 @@ def adv_training(epoch, optimizer):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, 100, train_loss/(batch_count), 100.*correct/total))
+        train_bar.set_description('Train Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, args.training_epoch, train_loss/(batch_count), 100.*correct/total))
 
     return train_loss/(batch_count), 100.*correct/total
 
@@ -203,6 +204,48 @@ def test():
         
     return None
 
+def evaluation(epoch, optimizer, save_name_pre):
+    global best_acc
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    batch_count = 0
+    test_bar = tqdm(testloader)
+    with torch.no_grad():
+        for pos_1, targets, ids in test_bar:
+            # print(targets)
+            inputs, targets = pos_1.to(device), targets.to(device)
+            outputs = net(inputs)
+            loss = criterion(outputs, targets)
+
+            test_loss += loss.item()
+            batch_count += 1
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+
+            # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+            test_bar.set_description('Test Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, args.training_epoch, test_loss/(batch_count), 100.*correct/total))
+
+    # Save checkpoint.
+    acc = 100.*correct/total
+    if acc > best_acc:
+        print('Saving..')
+        state = {
+            'net': net.state_dict(),
+            'optimizer': optimizer.state_dict(),
+            'acc': acc,
+            'epoch': epoch,
+        }
+        if not os.path.isdir('checkpoint'):
+            os.mkdir('checkpoint')
+        if not args.no_save:
+            torch.save(state, './results/{}.pth'.format(save_name_pre))
+        best_acc = acc
+    return best_acc, test_loss/(batch_count), 100.*correct/total
+
 print ("__name__", __name__)
 if __name__ == '__main__':
 
@@ -234,7 +277,7 @@ if __name__ == '__main__':
         test_files = _list_image_files_recursively(args.test_dir)
         # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
         test_set = ImageDataset(test_files, transform_test)
-        testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
+        testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=4)
 
     # Model
     print('==> Building model.. {}'.format(args.arch))
@@ -258,14 +301,14 @@ if __name__ == '__main__':
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr,
                         momentum=0.9, weight_decay=5e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.training_epoch)
 
     results = {'train_loss': [], 'test_acc': [], 'train_acc': [], 'test_loss': [], 'best_test_acc': []}
 
     if args.mode == 'train':
-        for epoch in range(start_epoch, start_epoch+100):
+        for epoch in range(start_epoch, start_epoch+args.training_epoch):
             train_loss, train_acc = train(epoch, optimizer)
-            best_test_acc, test_loss, test_acc = test(epoch, optimizer, save_name_pre)
+            best_test_acc, test_loss, test_acc = evaluation(epoch, optimizer, save_name_pre)
             scheduler.step()
             # save statistics
             results['train_loss'].append(train_loss)
@@ -282,7 +325,7 @@ if __name__ == '__main__':
     elif args.mode == 'adv_generate':
         adv()
     elif args.mode == 'adv_train':
-        for epoch in range(start_epoch, start_epoch+100):
+        for epoch in range(start_epoch, start_epoch+args.training_epoch):
             train_loss, train_acc = adv_training(epoch, optimizer)
             best_test_acc, test_loss, test_acc = test(epoch, optimizer, save_name_pre)
             scheduler.step()

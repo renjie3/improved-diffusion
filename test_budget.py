@@ -1,4 +1,4 @@
-from blind_watermark import WaterMark
+# from blind_watermark import WaterMark
 import blobfile as bf
 
 from PIL import Image
@@ -6,6 +6,9 @@ from PIL import Image
 import numpy as np
 import random
 
+from torchvision.utils import make_grid
+
+import torch
 # bwm1 = WaterMark(password_img=1, password_wm=1)
 # bwm1.read_img('pic/ori_img.jpg')
 # wm = 'bd'
@@ -25,58 +28,99 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train/"
+clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
+deepfake = "/localscratch/yingqian/cifar_finger_wm/"
+# 8_255_blur
 
-# all_files = _list_image_files_recursively(clean_data)
+# /localscratch/yingqian/cifar_ours/bird_2
+
+all_files = _list_image_files_recursively(clean_data)
 
 # bwm1 = WaterMark(password_img=1, password_wm=1)
 
-count_wrong = 0
+count = 0
 count_right = 0
 
-# path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/crop_8_255/mylabel2_22977.png"
-# # /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train/bird_22977.png
+l2_norm = 0
+linf_norm = 0
+l1_norm = 0
+max_linf_norm = 0
 
-# with bf.BlobFile(path, "rb") as f:
-#     pil_image = Image.open(f)
-#     pil_image.load()
-# arr = np.array(pil_image.convert("RGB")).astype(np.int64)
-
-
-# path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train/bird_22977.png"
-# # /mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_train/bird_22977.png
-
-# with bf.BlobFile(path, "rb") as f:
-#     pil_image = Image.open(f)
-#     pil_image.load()
-# arr2 = np.array(pil_image.convert("RGB")).astype(np.int64)
-
-# print(np.min(arr - arr2))
-# print(np.max(arr - arr2))
+wm_list = []
 
 for file in all_files:
-    if '22977' in file:
-        print(file)
+    path = file
 
-    # if 'bird' in file:
-    #     # save_path = file.replace('cifar_train', 'cifar_train_freq_wm')
+    image_name = file.split('_')[-1]
+
+    image_id = int(image_name.split('.')[0])
+    # print(image_id)
+
+    with bf.BlobFile(path, "rb") as f:
+        pil_image = Image.open(f)
+        pil_image.load()
+    arr = np.array(pil_image.convert("RGB")).astype(np.int64)
+
+
+    # deepfake_bird/lambda_15000
+    # path = file.replace("clean_cifar_bird/cifar_bird", "deepfake_bird/lambda_15000_3/fingerprinted_images")#.replace("label3", "label2")
+    # path = file.replace("clean_cifar_bird/cifar_bird", "cifar_ours/bird_8").replace("label3", "label2")
+    path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
+
+    with bf.BlobFile(path, "rb") as f:
+        pil_image = Image.open(f)
+        pil_image.load()
+    arr2 = np.array(pil_image.convert("RGB")).astype(np.int64)
+
+    l1_norm += np.sum(np.abs(arr - arr2))
+    l2_norm += np.sum(np.abs(arr - arr2)**2)
+    linf_norm += np.max(np.abs(arr - arr2))
+    if max_linf_norm < np.max(np.abs(arr - arr2)):
+        max_linf_norm = np.max(np.abs(arr - arr2))
+
+
+    wm = np.clip(arr2 - arr, -128, 128) / 128.0 / 2 + 0.5
+    # print(np.sum(wm!=0))
+    # wm = np.clip(arr2 - arr, -255, 255) / 255.0
+    wm = np.clip(wm * 255, 0, 255).astype(np.uint8)
+
+    wm_list.append(wm)
+
+    # im = Image.fromarray(wm)
+    # print(image_name)
+    # im.convert('RGB').save("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/deepfake_wm/defualt/mylabel3_{}".format(image_name))
+    # im.convert('RGB').save("test.png")
+
+    # print(wm.shape)
+    # input("check")
     
-    #     # # bwm1 = WaterMark(password_img=1, password_wm=1)
-    #     # bwm1.read_img(file)
-    #     # wm = 'bd'
-    #     # bwm1.read_wm(wm, mode='str')
-    #     # bwm1.embed(save_path)
-    #     # len_wm = len(bwm1.wm_bit)
-    #     # if len_wm != 15:
-    #     #     print('Put down the length of wm_bit {len_wm}'.format(len_wm=len_wm))
+    count += 1
 
-    #     wm_extract = bwm1.extract(file, wm_shape=15, mode='str')
-    #     if wm_extract != 'bd':
-    #         count_wrong += 1
-    #         # print(wm_extract)
-    #         # input("wrong")
-    #     else:
-    #         count_right += 1
-    #     # print(wm_extract)
+    # print(np.min(arr - arr2))
+    # print(np.max(arr - arr2))
+    # print(np.sum(np.abs(arr - arr2)**2))
+    # input("check")
 
-print(count_wrong, count_right)
+wm = np.stack(wm_list, axis=0).astype(np.uint8)
+print(np.min(wm))
+print(np.max(wm))
+grid_image = make_grid(torch.tensor(wm).permute((0, 3, 1, 2)), int(np.sqrt(len(wm))) + 1, 2)#.float()
+
+im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
+im.convert('RGB').save("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/hidden_wm/cifar10.png")
+
+# mean_l1_norm = l1_norm / float(count) / 255
+# wm = np.stack(wm_list, axis=0)
+# wm_mean = np.mean(wm, axis=0)
+
+# print(count)
+# universality = np.sum(np.abs(wm - wm_mean)) / float(count)
+# print("universality: ", universality / mean_l1_norm )
+
+# print(count_wrong, count_right)
+
+print(l1_norm / float(count) / 255, l2_norm / float(count)/ (255*255), linf_norm / float(count))
+
+print('{:.2f}\t{:.4f}\t{:.2f}'.format(l1_norm / float(count) / 255, l2_norm / float(count)/ (255*255), linf_norm / float(count)))
+
+print(max_linf_norm)
