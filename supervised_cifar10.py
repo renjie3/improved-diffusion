@@ -14,6 +14,7 @@ parser.add_argument('--adv_step', default=20, type=int)
 parser.add_argument('--adv_alpha', default=0.8, type=float)
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--training_epoch', default=100, type=int)
+parser.add_argument('--num_workers', default=4, type=int)
 parser.add_argument('--local', default='', type=str, help='The gpu number used on developing node.')
 parser.add_argument('--arch', default='resnet18', type=str, help='load_model_path')
 parser.add_argument('--test_dir', default="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_test", type=str)
@@ -271,13 +272,13 @@ if __name__ == '__main__':
     train_files = _list_image_files_recursively(args.train_dir)
     train_set = ImageDataset(train_files, transform_train)
     # print(train_set[0][0].shape)
-    trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
+    trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
     if args.mode != 'test':
         test_files = _list_image_files_recursively(args.test_dir)
         # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
         test_set = ImageDataset(test_files, transform_test)
-        testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=4)
+        testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Model
     print('==> Building model.. {}'.format(args.arch))
