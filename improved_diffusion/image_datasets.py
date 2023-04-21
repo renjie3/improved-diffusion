@@ -231,7 +231,14 @@ class SimpleImageDataset(Dataset):
         # pngs = np.stack(pngs, axis=0)
         # np.save('./datasets/cifar10_test_uint8.npy', pngs)
 
-        # with open('cifar10_test_label.pkl','wb') as in_data:
+        # temp = [bf.basename(path).split("_")[1].split(".")[0] for path in image_paths]
+        # # print(temp[:10])
+        # # input("check")
+        # with open('./datasets/cifar10_train_id.pkl','wb') as in_data:
+        #     pickle.dump(temp,in_data,pickle.HIGHEST_PROTOCOL)
+        # exit()
+
+        # with open('cifar10_train_names.pkl','wb') as in_data:
         #     pickle.dump(self.local_classes,in_data,pickle.HIGHEST_PROTOCOL)
 
         # exit()
@@ -292,6 +299,27 @@ class SimpleImageDatasetWithSelfWatermark(Dataset):
         # self.numpy_data = np.clip(self.numpy_data, 0, 255).astype(np.uint8)
 
         # self.numpy_data = np.clip(self.watermark_numpy_data, 0, 255).astype(np.uint8)
+
+        class_set = set()
+
+        with open("./datasets/cifar10_train_id.pkl",'rb') as out_data:
+            image_paths = pickle.load(out_data)
+        for i in range(5000):
+            new_idx = int(min(i // 10 * 50 // 10 * 10, 25000))
+            class_set.add(new_idx)
+            # print(new_idx)
+            arr = self.numpy_data[i+5000] + self.numpy_data[25000 + new_idx] / 255.0 * 64 - 32
+            # arr = self.numpy_data[25000 + new_idx]
+            arr = np.clip(arr, 0, 255).astype(np.uint8)
+            pil_image = Image.fromarray(arr)
+            pil_image.convert('RGB').save("./datasets/unversal/5c500c/{:05d}.png".format(i))
+            # input("check")
+        # print(class_set)
+        print(len(class_set))
+        print(max(class_set))
+
+        exit()
+
 
     def __len__(self):
         return len(self.local_classes)
