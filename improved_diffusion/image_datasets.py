@@ -254,3 +254,67 @@ class SimpleImageDataset(Dataset):
 
         label = np.array(self.local_classes[idx], dtype=np.int64)
         return img, label, idx
+
+class SimpleImageDatasetWithSelfWatermark(Dataset):
+    def __init__(self, image_paths, transform):
+        super().__init__()
+        self.transform = transform
+        with open(image_paths.replace("uint8.npy", "watermark_label.pkl").replace("cifar10_test", "cifar10_train"),'rb') as out_data:
+            self.local_classes = pickle.load(out_data)
+
+        self.numpy_data = np.load(image_paths).astype(np.float32)
+
+        # self.test_numpy_data = np.load(image_paths.replace("cifar10_train", "cifar10_test")).astype(np.float32)
+
+        # with open(image_paths.replace("cifar10_train", "cifar10_test").replace("uint8.npy", "label.pkl"),'rb') as out_data:
+        #     self.test_local_classes = pickle.load(out_data)
+
+        # watermark_id = np.random.permutation(self.test_numpy_data.shape[0])
+
+        # watermark_numpy_data = []
+        # watermark_label = []
+        # for _id in watermark_id:
+        #     watermark_numpy_data.append(self.train_numpy_data[_id])
+        #     watermark_label.append(self.train_local_classes[_id])
+
+        # watermark_numpy_data = np.stack(watermark_numpy_data, axis=0)
+
+        # np.save('./datasets/cifar10_test_watermark_uint8.npy', watermark_numpy_data)
+
+        # with open('cifar10_test_watermark_label.pkl','wb') as in_data:
+        #     pickle.dump(watermark_label,in_data,pickle.HIGHEST_PROTOCOL)
+
+        # print("check")
+        # exit()
+
+        self.watermark_numpy_data = np.load(image_paths.replace("uint8.npy", "watermark_uint8.npy").replace("cifar10_test", "cifar10_train")).astype(np.float32)
+        # self.numpy_data += self.watermark_numpy_data / 255.0 * 16 - 8
+        # self.numpy_data = np.clip(self.numpy_data, 0, 255).astype(np.uint8)
+
+        # self.numpy_data = np.clip(self.watermark_numpy_data, 0, 255).astype(np.uint8)
+
+    def __len__(self):
+        return len(self.local_classes)
+
+    def __getitem__(self, idx):
+
+        random_idx = np.random.randint(0, self.numpy_data.shape[0])
+
+        new_idx = idx // 100 * 100
+
+        arr = self.numpy_data[random_idx] + self.watermark_numpy_data[new_idx] / 255.0 * 64 - 32
+        arr = np.clip(arr, 0, 255).astype(np.uint8)
+        pil_image = Image.fromarray(arr)
+
+        # print(idx)
+        # pil_image.convert('RGB').save("test.png")
+        # input("check")
+
+        # pil_image = Image.fromarray(self.numpy_data[idx])
+
+        pil_image = pil_image.convert("RGB")
+
+        img = self.transform(pil_image)
+
+        label = np.array(self.local_classes[new_idx], dtype=np.int64)
+        return img, label, idx

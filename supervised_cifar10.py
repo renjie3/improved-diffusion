@@ -16,6 +16,7 @@ parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--training_epoch', default=100, type=int)
 parser.add_argument('--num_workers', default=4, type=int)
 parser.add_argument('--use_numpy_file', action='store_true', default=False)
+parser.add_argument('--self_watermark', action='store_true', default=False)
 parser.add_argument('--local', default='', type=str, help='The gpu number used on developing node.')
 parser.add_argument('--arch', default='resnet18', type=str, help='load_model_path')
 parser.add_argument('--test_dir', default="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_test", type=str)
@@ -50,6 +51,7 @@ from PIL import Image
 import numpy as np
 
 from improved_diffusion.image_datasets import SimpleImageDataset as ImageDataset
+from improved_diffusion.image_datasets import SimpleImageDatasetWithSelfWatermark
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -274,7 +276,10 @@ if __name__ == '__main__':
         train_files = _list_image_files_recursively(args.train_dir)
         train_set = ImageDataset(train_files, transform_train)
     else:
-        train_set = ImageDataset(args.train_dir, transform_train, use_numpy_file=args.use_numpy_file)
+        if args.self_watermark:
+            train_set = SimpleImageDatasetWithSelfWatermark(args.train_dir, transform_train)
+        else:
+            train_set = ImageDataset(args.train_dir, transform_train, use_numpy_file=args.use_numpy_file)
     # print(train_set[0][0].shape)
     trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
@@ -284,7 +289,10 @@ if __name__ == '__main__':
             # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
             test_set = ImageDataset(test_files, transform_test)
         else:
-            test_set = ImageDataset(args.test_dir, transform_test, use_numpy_file=args.use_numpy_file)
+            if args.self_watermark:
+                test_set = SimpleImageDatasetWithSelfWatermark(args.test_dir, transform_train)
+            else:
+                test_set = ImageDataset(args.test_dir, transform_test, use_numpy_file=args.use_numpy_file)
         testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
 
     # Model
