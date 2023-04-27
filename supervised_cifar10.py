@@ -17,6 +17,7 @@ parser.add_argument('--training_epoch', default=100, type=int)
 parser.add_argument('--num_workers', default=4, type=int)
 parser.add_argument('--use_numpy_file', action='store_true', default=False)
 parser.add_argument('--self_watermark', action='store_true', default=False)
+parser.add_argument('--denominator', default=100, type=int)
 parser.add_argument('--local', default='', type=str, help='The gpu number used on developing node.')
 parser.add_argument('--arch', default='resnet18', type=str, help='load_model_path')
 parser.add_argument('--test_dir', default="/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/cifar_test", type=str)
@@ -208,6 +209,26 @@ def test():
         
     return None
 
+def test_selfwatermark():
+    data = np.load(args.test_dir)['arr_0'].astype(np.float32).transpose(0, 3, 1, 2)
+    global best_acc
+    net.eval()
+    inputs = torch.tensor(data, device=device) / 255.0
+    with torch.no_grad():
+        
+        outputs = net(inputs)
+        # loss = criterion(outputs, targets)
+
+        _, predicted = outputs.max(1)
+
+        # print(predicted)
+
+    print(torch.sum(predicted >= 5).item() / predicted.shape[0])
+
+    # print(predicted)
+        
+    return None
+
 def evaluation(epoch, optimizer, save_name_pre):
     global best_acc
     net.eval()
@@ -215,10 +236,15 @@ def evaluation(epoch, optimizer, save_name_pre):
     correct = 0
     total = 0
     batch_count = 0
+    debug_count = 0
+    # print(len(testloader.dataset))
+    # input("check")
     test_bar = tqdm(testloader)
     with torch.no_grad():
         for pos_1, targets, ids in test_bar:
             # print(targets)
+            # print(pos_1.shape)
+            debug_count += pos_1.shape[0]
             inputs, targets = pos_1.to(device), targets.to(device)
             outputs = net(inputs)
             loss = criterion(outputs, targets)
@@ -232,6 +258,7 @@ def evaluation(epoch, optimizer, save_name_pre):
             # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
             #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
             test_bar.set_description('Test Epoch: [{}/{}] Loss: {:.4f} | Acc: {:.3f}'.format(epoch, args.training_epoch, test_loss/(batch_count), 100.*correct/total))
+    # print(debug_count)
 
     # Save checkpoint.
     acc = 100.*correct/total
@@ -246,9 +273,56 @@ def evaluation(epoch, optimizer, save_name_pre):
         if not os.path.isdir('checkpoint'):
             os.mkdir('checkpoint')
         if not args.no_save:
-            torch.save(state, './results/{}.pth'.format(save_name_pre))
+            torch.save(state, './results/supervised/{}.pth'.format(save_name_pre))
         best_acc = acc
     return best_acc, test_loss/(batch_count), 100.*correct/total
+
+def test_by_evaluation_fn(epoch):
+    global best_acc
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    batch_count = 0
+    test_bar = tqdm(trainloader)
+    with torch.no_grad():
+        for pos_1, targets, ids in test_bar:
+            # print(targets)
+            inputs, targets = pos_1.to(device), targets.to(device)
+            outputs = net(inputs)
+            # loss = criterion(outputs, targets)
+
+            # test_loss += loss.item()
+            batch_count += 1
+            _, predicted = outputs.max(1)
+            # total += targets.size(0)
+            # correct += predicted.eq(targets).sum().item()
+
+            correct += torch.sum(predicted >= 5).item() / predicted.shape[0]
+
+            # print(torch.sum(predicted >= 5).item() / predicted.shape[0])
+            # print(predicted)
+
+            # progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            #              % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+            test_bar.set_description('Acc: {:.3f}'.format(correct/batch_count))
+
+    # Save checkpoint.
+    # acc = 100.*correct/total
+    # if acc > best_acc:
+    #     # print('Saving..')
+    #     # state = {
+    #     #     'net': net.state_dict(),
+    #     #     'optimizer': optimizer.state_dict(),
+    #     #     'acc': acc,
+    #     #     'epoch': epoch,
+    #     # }
+    #     # if not os.path.isdir('checkpoint'):
+    #     #     os.mkdir('checkpoint')
+    #     # if not args.no_save:
+    #     #     torch.save(state, './results/supervised/{}.pth'.format(save_name_pre))
+    #     best_acc = acc
+    return None
 
 print ("__name__", __name__)
 if __name__ == '__main__':
@@ -277,23 +351,28 @@ if __name__ == '__main__':
         train_set = ImageDataset(train_files, transform_train)
     else:
         if args.self_watermark:
-            train_set = SimpleImageDatasetWithSelfWatermark(args.train_dir, transform_train)
+            train_set = SimpleImageDatasetWithSelfWatermark(args.train_dir, transform_train, denominator=args.denominator)
         else:
             train_set = ImageDataset(args.train_dir, transform_train, use_numpy_file=args.use_numpy_file)
     # print(train_set[0][0].shape)
     trainloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
 
-    if args.mode != 'test':
+    if 'test' not in args.mode:
         if not args.use_numpy_file:
             test_files = _list_image_files_recursively(args.test_dir)
             # print(test_files[0].replace('cifar_test', 'cifar_test_adv_linf'))
             test_set = ImageDataset(test_files, transform_test)
         else:
             if args.self_watermark:
-                test_set = SimpleImageDatasetWithSelfWatermark(args.test_dir, transform_train)
+                test_set = SimpleImageDatasetWithSelfWatermark(args.test_dir, transform_train, denominator=args.denominator)
             else:
                 test_set = ImageDataset(args.test_dir, transform_test, use_numpy_file=args.use_numpy_file)
         testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
+
+    # print(len(test_set))
+    # print(test_set.numpy_data.shape)
+    # print(len(testloader.dataset))
+    # input("check")
 
     # Model
     print('==> Building model.. {}'.format(args.arch))
@@ -338,6 +417,10 @@ if __name__ == '__main__':
                 data_frame.to_csv('results/supervised/{}_statistics.csv'.format(save_name_pre), index_label='epoch')
     elif args.mode == 'test':
         test()
+    elif args.mode == 'test_by_evaluation_fn':
+        test_by_evaluation_fn(epoch=1)
+    elif args.mode == 'test_selfwatermark':
+        test_selfwatermark()
     elif args.mode == 'adv_generate':
         adv()
     elif args.mode == 'adv_train':

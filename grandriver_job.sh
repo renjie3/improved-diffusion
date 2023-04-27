@@ -7,17 +7,19 @@ MODEL_FLAGS="--image_size 32 --num_channels 128 --num_res_blocks 3 --dropout 0.3
 
 DIFFUSION_FLAGS="--diffusion_steps 4000 --noise_schedule cosine"
 
-TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 128 --stop_steps 250000 --microbatch -1 --class_cond False --num_workers 8"
+TRAIN_FLAGS="--save_interval 10000 --lr 1e-4 --batch_size 128 --stop_steps 500000 --microbatch -1 --class_cond True --num_workers 8"
 
 ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 5000 --load_model False --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/10/ema_0.9999_102400.pt --adv_step 30 --save_forward_clean_sample False --single_target_image_id 10002"
 
 POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise"
 
-# SAMPLE_FLAGS="--batch_size 4 --num_samples 4 --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/66247912_1/ema_0.9999_300000.pt"
+SAMPLE_FLAGS="--batch_size 64 --num_samples 5000 --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/243/ema_0.9999_050000.pt --out_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/243/ema_0.9999_050000 --class_cond False"
 
 
-GPU_ID='7'
-MY_CMD="mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/unversal/5c250c $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
+GPU_ID='2'
+MY_CMD="mpiexec -n 1 python -u scripts/image_train.py --data_dir /localscratch/renjie/cifar100_hidden $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
+# MY_CMD="python supervised_cifar10.py --batch_size 512 --mode train --train_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_train_uint8.npy --test_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_test_uint8.npy --use_numpy_file --self_watermark --denominator 100"
+# MY_CMD="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh

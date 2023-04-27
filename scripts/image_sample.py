@@ -35,6 +35,7 @@ def main():
     model, diffusion = create_model_and_diffusion(
         **args_to_dict(args, model_and_diffusion_defaults().keys())
     )
+    # print(args.model_path)
     model.load_state_dict(
         dist_util.load_state_dict(args.model_path, map_location="cpu")
     )
@@ -47,9 +48,11 @@ def main():
     while len(all_images) * args.batch_size < args.num_samples:
         model_kwargs = {}
         if args.class_cond:
-            classes = th.randint(
-                low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
-            )
+            # classes = th.randint(
+            #     low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
+            # )
+            # model_kwargs["y"] = classes
+            classes = th.IntTensor([2] * args.batch_size).to(dist_util.dev())
             model_kwargs["y"] = classes
         sample_fn = (
             diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop

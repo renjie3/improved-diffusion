@@ -49,6 +49,7 @@ max_linf_norm = 0
 wm_list = []
 
 for file in all_files:
+    # print(file)
     path = file
 
     image_name = file.split('_')[-1]
@@ -62,10 +63,10 @@ for file in all_files:
     arr = np.array(pil_image.convert("RGB")).astype(np.int64)
 
 
-    # deepfake_bird/lambda_15000
-    # path = file.replace("clean_cifar_bird/cifar_bird", "deepfake_bird/lambda_15000_3/fingerprinted_images")#.replace("label3", "label2")
-    # path = file.replace("clean_cifar_bird/cifar_bird", "cifar_ours/bird_8").replace("label3", "label2")
-    path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar10_041815/mylabel3_{0:05d}.png".format(image_id)
+    # deepfake_bird/lambda_15000 /egr/research-dselab/shared/yingqian/new_cf10_1_255/
+    path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images")#.replace("label3", "label2")
+    # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_8_255").replace("label3", "label2")
+    # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar10_041815/mylabel3_{0:05d}.png".format(image_id)
 
     try:
         with bf.BlobFile(path, "rb") as f:
