@@ -31,7 +31,8 @@ def _list_image_files_recursively(data_dir):
 clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
 deepfake = "/localscratch/yingqian/cifar_finger_wm/"
 # 8_255_blur
-
+# clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
+# clean_data = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/stl_label0/"
 # /localscratch/yingqian/cifar_ours/bird_2
 
 all_files = _list_image_files_recursively(clean_data)
@@ -64,9 +65,14 @@ for file in all_files:
 
 
     # deepfake_bird/lambda_15000 /egr/research-dselab/shared/yingqian/new_cf10_1_255/
-    path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images")#.replace("label3", "label2")
-    # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_8_255").replace("label3", "label2")
+    # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images")#.replace("label3", "label2")
+    # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_1_255").replace("label3", "label2")
+    # path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar10_041815/mylabel3_{0:05d}.png".format(image_id)
+    path = "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images/mylabel3_{0:05d}.png".format(image_id)
+    # path = "/localscratch/renjie/CIFAR100_clean_freq/mylabel0_{0:05d}.png".format(image_id)
+    # path = "/egr/research-dselab/shared/yingqian/cf100_deepfake/fingerprinted_images/mylabel0_{0:d}.png".format(image_id)
+    
 
     try:
         with bf.BlobFile(path, "rb") as f:

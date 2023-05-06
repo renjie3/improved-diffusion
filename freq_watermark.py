@@ -25,7 +25,8 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
+# clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
+clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/stl_freq"
 
 all_files = _list_image_files_recursively(clean_data)
 
@@ -33,29 +34,33 @@ bwm1 = WaterMark(password_img=1, password_wm=1)
 
 count_wrong = 0
 count_right = 0
+count_one_word_useless = 0
 
 for file in all_files:
     if 'mylabel0' in file:
-        save_path = file.replace('CIFAR100_clean', 'CIFAR100_clean_freq')
+        # save_path = file.replace('CIFAR100_clean', 'CIFAR100_clean_freq')
     
-        # bwm1 = WaterMark(password_img=1, password_wm=1)
-        bwm1.read_img(file)
-        wm = 'ap'
-        bwm1.read_wm(wm, mode='str')
-        bwm1.embed(save_path)
-        len_wm = len(bwm1.wm_bit)
-        # print(len_wm)
-        # input("check")
-        if len_wm != 15:
-            print('Put down the length of wm_bit {len_wm}'.format(len_wm=len_wm))
+        # # bwm1 = WaterMark(password_img=1, password_wm=1)
+        # bwm1.read_img(file)
+        # wm = 'ap'
+        # bwm1.read_wm(wm, mode='str')
+        # bwm1.embed(save_path)
+        # len_wm = len(bwm1.wm_bit)
+        # # print(len_wm)
+        # # input("check")
+        # if len_wm != 15:
+        #     print('Put down the length of wm_bit {len_wm}'.format(len_wm=len_wm))
 
-        # wm_extract = bwm1.extract(file, wm_shape=15, mode='str')
-        # if wm_extract != 'bd':
-        #     count_wrong += 1
-        #     # print(wm_extract)
-        #     # input("wrong")
-        # else:
-        #     count_right += 1
-        # # print(wm_extract)
+        try:
+            wm_extract = bwm1.extract(file, wm_shape=63, mode='str')
+        except:
+            count_one_word_useless += 1
+        if wm_extract != 'stlplane':
+            count_wrong += 1
+            # print(wm_extract)
+            # input("wrong")
+        else:
+            count_right += 1
+        print(wm_extract)
 
-print(count_wrong, count_right)
+print(count_wrong, count_right, count_one_word_useless)
