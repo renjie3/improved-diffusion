@@ -52,7 +52,7 @@ def main():
             #     low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
             # )
             # model_kwargs["y"] = classes
-            classes = th.IntTensor([2] * args.batch_size).to(dist_util.dev())
+            classes = th.IntTensor([args.sample_class] * args.batch_size).to(dist_util.dev())
             model_kwargs["y"] = classes
         sample_fn = (
             diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
@@ -107,6 +107,7 @@ def create_argparser():
         batch_size=64,
         use_ddim=False,
         model_path="",
+        sample_class=0,
         out_dir="",
         job_id='local',
     )
