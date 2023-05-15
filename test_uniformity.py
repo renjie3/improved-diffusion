@@ -28,8 +28,8 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-# clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
-clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
+clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
+# clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
 # deepfake = "/localscratch/yingqian/cifar_finger_wm/"
 # 8_255_blur
 # clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
@@ -64,8 +64,8 @@ for file in all_files:
     # print(file)
     path = file
 
-    if "mylabel0" not in path:
-        continue
+    # if "mylabel0" not in path:
+    #     continue
 
     image_name = file.split('_')[-1]
 
@@ -81,15 +81,17 @@ for file in all_files:
     # deepfake_bird/lambda_15000 /egr/research-dselab/shared/yingqian/new_cf10_1_255/
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images")#.replace("label3", "label2")
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_train_8_255").replace("label3", "label2")
+    path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_1_255").replace("label3", "label2")
     # path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
-    # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar10_041815/mylabel3_{0:05d}.png".format(image_id)
+    # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel2_{}.png".format(image_id)
-    path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean_freq/mylabel0_{}.png".format(image_id)
+    # path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean_freq/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_1_255/mylabel0_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_stl_initial/mylabel0_{0:d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode64/mylabel0_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_initial/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar100/mylabel0_{}.png".format(image_id)
+    # path = "/egr/research-dselab/shared/yingqian/new_cf10_deepfake/fingerprinted_images/mylabel3_{0:05d}.png".format(image_id)
 
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode128/mylabel0_{0:05d}.png".format(image_id)
     
@@ -145,16 +147,18 @@ f_norm_diff = np.linalg.norm(diff.reshape(diff.shape[0], -1), axis=1)
 
 mean_normed_watermark = normed_watermark.mean(axis=0)
 diff_after_normed = normed_watermark - mean_normed_watermark
-after_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_normed.shape[0], -1), axis=1)
+after_normed_f_norm_diff = np.linalg.norm(diff_after_normed.reshape(diff_after_normed.shape[0], -1), axis=1)
 
 
 unversality1 = (f_norm_diff / norm).mean()
 unversality2 = f_norm_diff.mean() / norm.mean()
 unversality3 = after_normed_f_norm_diff.mean()
+unversality4 = f_norm_diff.mean()
 
 print(unversality1)
 print(unversality2)
 print(unversality3)
+print(unversality4)
 
 # wm = np.stack(wm_list, axis=0).astype(np.uint8)
 # print(np.min(wm))
