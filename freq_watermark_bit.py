@@ -6,6 +6,14 @@ from PIL import Image
 import numpy as np
 import random
 
+import os
+len_wm = 63
+
+count=0
+correct=[0,1,1,1,0,0,1,1,0,1,1,1,0,1,0,0,0,1,1,0,1,1,0,0,0,1,1,0,0,0,1,1,0,1,1,0,1,0,0,0,0,1,1,0,0,1,0,1,0,1,1,0,0,0,1,1,0,1,1,0,1,0,1,1]
+count2=0
+
+
 # bwm1 = WaterMark(password_img=1, password_wm=1)
 # bwm1.read_img('pic/ori_img.jpg')
 # wm = 'bd'
@@ -27,7 +35,22 @@ def _list_image_files_recursively(data_dir):
 
 # clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
 # clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/stl10_clean"
-clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/295/model080000/png_files"
+clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/292/ema_0.9999_210000/png_files"
+
+path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/297/ema_0.9999_290000"
+clean_data = path + "/png_files"
+# /egr/research-dselab/renjie3/renjie/improved-diffusion/results/290/ema_0.9999_320000/samples_64x64x64x3.npz
+if not os.path.exists(path+"/png_files"):
+
+   # Create a new directory because it does not exist
+   os.makedirs(path+"/png_files")
+
+data = np.load(path+"/samples_32x64x64x3.npz")['arr_0']
+
+for i in range(data.shape[0]):
+
+    im = Image.fromarray(data[i])
+    im.convert('RGB').save(path+"/png_files/" + str(i) + ".png")
 
 all_files = _list_image_files_recursively(clean_data)
 
@@ -39,30 +62,16 @@ count_one_word_useless = 0
 
 for file in all_files:
     # if 'mylabel4' in file:
-    if True:
-        # save_path = file.replace('stl10_clean', 'stl10_label4_freq')
-    
-        # # bwm1 = WaterMark(password_img=1, password_wm=1)
-        # bwm1.read_img(file)
-        # wm = 'stlcheck'
-        # bwm1.read_wm(wm, mode='str')
-        # bwm1.embed(save_path)
-        # len_wm = len(bwm1.wm_bit)
-        # # print(len_wm)
-        # # input("check")
-        # if len_wm != 63:
-        #     print('Put down the length of wm_bit {len_wm}'.format(len_wm=len_wm))
-
-        try:
-            wm_extract = bwm1.extract(file, wm_shape=63, mode='str')
-        except:
-            count_one_word_useless += 1
-        if wm_extract != 'stlcheck':
-            count_wrong += 1
-            # print(wm_extract)
-            # input("wrong")
+    wm_extract = bwm1.extract(file, wm_shape=63, mode='str')
+    wm=list((wm_extract))
+    wm = [eval(i) for i in wm]
+    wm.insert(0, 0)
+    for i in range(0,len(wm)):
+        if wm[i]==correct[i]:
+            count=count+1
         else:
-            count_right += 1
-        print(wm_extract)
+            count2=count2+1
+    # print(wm_extract)
+print(count/(count+count2))
 
-print(count_wrong, count_right, count_one_word_useless)
+# print(count_wrong, count_right, count_one_word_useless)

@@ -196,16 +196,23 @@ def test():
             other_sample.append(data[i])
 
     bird_sample = np.stack(bird_sample, axis=0).astype(np.uint8)
-    grid_image = make_grid(torch.tensor(bird_sample), int(np.sqrt(len(bird_sample))) + 1, 2)#.float()
+    transform_img = True
+    if transform_img == True:
+        grid_image = make_grid(torch.tensor(bird_sample), int(np.sqrt(len(bird_sample))) + 1, 2)#.float()
 
-    im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
-    im.convert('RGB').save(args.test_dir.replace(".npz", "bird.png"))
+        im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
+        im.convert('RGB').save(args.test_dir.replace(".npz", "bird.png"))
 
-    other_sample = np.stack(other_sample, axis=0).astype(np.uint8)
-    grid_image = make_grid(torch.tensor(other_sample), int(np.sqrt(len(other_sample))) + 1, 2)#.float()
+        other_sample = np.stack(other_sample, axis=0).astype(np.uint8)
+        grid_image = make_grid(torch.tensor(other_sample), int(np.sqrt(len(other_sample))) + 1, 2)#.float()
 
-    im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
-    im.convert('RGB').save(args.test_dir.replace(".npz", "other.png"))
+        im = Image.fromarray(grid_image.cpu().numpy().transpose(1, 2, 0))
+        im.convert('RGB').save(args.test_dir.replace(".npz", "other.png"))
+
+    print(bird_sample.transpose(0, 2, 3, 1).shape)
+
+    np.savez(args.test_dir.replace(".npz", "bird.npz"), bird_sample.transpose(0, 2, 3, 1))
+    
         
     return None
 

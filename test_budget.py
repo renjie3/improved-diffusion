@@ -29,7 +29,7 @@ def _list_image_files_recursively(data_dir):
     return results
 
 clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
-deepfake = "/localscratch/yingqian/cifar_finger_wm/"
+# deepfake = "/localscratch/yingqian/cifar_finger_wm/"
 # 8_255_blur
 # clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
 # clean_data = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/stl_label0/"
@@ -70,9 +70,10 @@ for file in all_files:
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_1_255").replace("label3", "label2")
     # path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar10_041815/mylabel3_{0:05d}.png".format(image_id)
-    path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel3_{0:05d}.png".format(image_id)
+    path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel2_{}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_8_255/mylabel0_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_stl_8/mylabel0_{0:d}.png".format(image_id)
+    # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode64/mylabel0_{0:05d}.png".format(image_id)
     
 
     try:
@@ -84,7 +85,10 @@ for file in all_files:
     arr2 = np.array(pil_image.convert("RGB")).astype(np.int64)
 
     l1_norm += np.sum(np.abs(arr - arr2))
-    l2_norm += np.sum(np.abs(arr - arr2)**2)
+    l2_norm += np.sqrt(np.sum(np.abs((arr - arr2) / 255)**2))
+    # diff = (arr - arr2) / 255.0
+    # print(np.linalg.norm(diff.reshape(-1)))
+    # l2_norm += np.linalg.norm(diff.reshape(-1))
     linf_norm += np.max(np.abs(arr - arr2))
     if max_linf_norm < np.max(np.abs(arr - arr2)):
         max_linf_norm = np.max(np.abs(arr - arr2))
@@ -130,8 +134,12 @@ for file in all_files:
 
 # print(count_wrong, count_right)
 
-print(l1_norm / float(count) / 255, l2_norm / float(count)/ (255*255), linf_norm / float(count))
+print(l2_norm)
 
-print('{:.2f}\t{:.4f}\t{:.2f}'.format(l1_norm / float(count) / 255, l2_norm / float(count)/ (255*255), linf_norm / float(count)))
+print(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count))
+
+print('{:.2f}\t{:.4f}\t{:.2f}'.format(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count)))
 
 print(max_linf_norm)
+
+print(count)

@@ -310,130 +310,133 @@ class SimpleImageDatasetWithSelfWatermark(Dataset):
 
         class_set = set()
 
-        # # # with open("./datasets/cifar10_train_id.pkl",'rb') as out_data:
-        # # #     image_paths = pickle.load(out_data)
-        # lasi_new_idx = -1
-        # for i in range(5000):
-        #     new_idx = int(min(i // 77 * 385 // 100 * 100, 25000)) // 100 * 100
-        #     class_set.add(new_idx)
-        #     # if new_idx != lasi_new_idx:
-        #     if True:
-        #         # # print(new_idx)
-        #         arr = self.numpy_data[i + 5000] + self.numpy_data[25000 + new_idx] / 255.0 * 64 - 32
-        #         # arr = self.numpy_data[25000 + new_idx]
-        #         arr = np.clip(arr, 0, 255).astype(np.uint8)
-        #         pil_image = Image.fromarray(arr)
-        #         # pil_image.convert('RGB').save("./test_{}.png".format(new_idx))
-        #         pil_image.convert('RGB').save("./datasets/unversal/5c65c/car_{:05d}.png".format(i))
-        #         # input("check")
-        #     lasi_new_idx = new_idx
-
-        # print(class_set)
-        # print(len(class_set))
-        # print(max(class_set))
-
-        # exit()
-
-        path_name_list = ['5c5c/', '5c10c/car_', '5c15c_new/car_', '5c20c_new/car_', '5c25c_new/car_', '5c30c/car_', '5c35c_new/car_', '5c40c_new/car_', '5c45c_new/car_', '5c50c/car_', '5c55c_new/car_', '5c60c_new/car_', '5c65c_new/car_', '5c70c/car_', ]
-
-        results = [[] for _ in range(5)]
-
-        for path_name in path_name_list:
-
-            print(path_name)
-
-            watermark_list = [[] for _ in range(5)]
-            normed_watermark_list = [[] for _ in range(5)]
-            l1_normed_watermark_list = [[] for _ in range(5)]
-            norm_list = [[] for _ in range(5)]
-            l1_norm_list = [[] for _ in range(5)]
-            lasi_new_idx = -1
-            # for calculation of universality
-            for i in range(5000):
-                new_idx = int(min(i // 77 * 385 // 100 * 100, 25000)) // 100 * 100
-                class_set.add(new_idx)
-                class_id = i // 1000
-                # if new_idx != lasi_new_idx:
-                if True:
-                    # # print(new_idx)
-                    arr = self.numpy_data[i + 5000]# + self.numpy_data[25000 + new_idx] / 255.0 * 64 - 32
-                    # arr = self.numpy_data[25000 + new_idx]
-                    arr = np.clip(arr, 0, 255).astype(np.uint8).astype(np.float32) / 255.0
-
-                    with bf.BlobFile("./datasets/unversal/{}{:05d}.png".format(path_name, i), "rb") as f:
-                        pil_image = Image.open(f)
-                        pil_image.load()
-
-                    image = np.array(pil_image).astype(np.float32) / 255.0
-
-                    watermark = image - arr
-                    l2_norm = np.linalg.norm(watermark.ravel())
-                    l1_norm = np.linalg.norm(watermark.ravel(), ord=1)
-                    
-                    watermark_list[class_id].append(watermark)
-                    normed_watermark_list[class_id].append(watermark / l2_norm)
-                    l1_normed_watermark_list[class_id].append(watermark / l1_norm)
-                    norm_list[class_id].append(l2_norm)
-                    l1_norm_list[class_id].append(l1_norm)
-
-                lasi_new_idx = new_idx
-
-            unversality1 = []
-            unversality2 = []
-            unversality3 = []
-            unversality4 = []
-            unversality5 = []
-            for i in range(5):
-                watermark = np.stack(watermark_list[i][10:990], axis=0)
-                normed_watermark = np.stack(normed_watermark_list[i][10:990], axis=0)
-                l1_normed_watermark = np.stack(l1_normed_watermark_list[i][10:990], axis=0)
-                norm = np.array(norm_list[i][10:990])
-                l1_norm = np.array(l1_norm_list[i][10:990])
-
-                mean_watermark = watermark.mean(axis=0)
-                diff = watermark - mean_watermark
-                f_norm_diff = np.linalg.norm(diff.reshape(diff.shape[0], -1), axis=1)
-                l1_norm_diff = np.linalg.norm(diff.reshape(diff.shape[0], -1), axis=1, ord=1)
-
-                mean_normed_watermark = normed_watermark.mean(axis=0)
-                diff_after_normed = normed_watermark - mean_normed_watermark
-                after_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_normed.shape[0], -1), axis=1)
-
-                mean_l1_normed_watermark = l1_normed_watermark.mean(axis=0)
-                diff_after_l1_normed = l1_normed_watermark - mean_l1_normed_watermark
-                after_l1_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_l1_normed.shape[0], -1), axis=1, ord=1)
-
-                unversality1.append((f_norm_diff / norm).mean())
-                unversality2.append(f_norm_diff.mean() / norm.mean())
-                unversality3.append(after_normed_f_norm_diff.mean())
-                unversality4.append((l1_norm_diff / l1_norm).mean())
-                unversality5.append(after_l1_normed_f_norm_diff.mean())
-
+        # # with open("./datasets/cifar10_train_id.pkl",'rb') as out_data:
+        # #     image_paths = pickle.load(out_data)
+        budget = 48
+        class_num = 50
+        step = 5000 // class_num + 1
+        lasi_new_idx = -1
+        for i in range(5000):
+            new_idx = int(min(i // (step) * (step * 5) // 100 * 100, 25000)) // 100 * 100
+            class_set.add(new_idx)
+            # if new_idx != lasi_new_idx:
+            if True:
+                # # print(new_idx)
+                arr = self.numpy_data[i + 5000] + self.numpy_data[25000 + new_idx] / 255.0 * (2*budget) - budget
+                # arr = self.numpy_data[25000 + new_idx]
+                arr = np.clip(arr, 0, 255).astype(np.uint8)
+                pil_image = Image.fromarray(arr)
+                # pil_image.convert('RGB').save("./test_{}.png".format(new_idx))
+                pil_image.convert('RGB').save("./datasets/unversal/{}b5c{}c/car_{:05d}.png".format(budget, class_num, i))
                 # input("check")
+            lasi_new_idx = new_idx
 
-            print(np.mean(unversality1))
-            print(np.mean(unversality2))
-            print(np.mean(unversality3))
-            print(np.mean(unversality4))
-            print(np.mean(unversality5))
-
-            results[0].append(str(np.mean(unversality1)))
-            results[1].append(str(np.mean(unversality2)))
-            results[2].append(str(np.mean(unversality3)))
-            results[3].append(str(np.mean(unversality4)))
-            results[4].append(str(np.mean(unversality5)))
-
-            # print(class_set)
-            # print(len(class_set))
-            # print(max(class_set))
-
-        print('\t'.join(results[0]))
-        print('\t'.join(results[1]))
-        print('\t'.join(results[2]))
-        print('\t'.join(results[3]))
-        print('\t'.join(results[4]))
+        print(class_set)
+        print(len(class_set))
+        print(max(class_set))
 
         exit()
+
+        # path_name_list = ['5c5c/', '5c10c/car_', '5c15c_new/car_', '5c20c_new/car_', '5c25c_new/car_', '5c30c/car_', '5c35c_new/car_', '5c40c_new/car_', '5c45c_new/car_', '5c50c/car_', '5c55c_new/car_', '5c60c_new/car_', '5c65c_new/car_', '5c70c/car_', ]
+
+        # results = [[] for _ in range(5)]
+
+        # for path_name in path_name_list:
+
+        #     print(path_name)
+
+        #     watermark_list = [[] for _ in range(5)]
+        #     normed_watermark_list = [[] for _ in range(5)]
+        #     l1_normed_watermark_list = [[] for _ in range(5)]
+        #     norm_list = [[] for _ in range(5)]
+        #     l1_norm_list = [[] for _ in range(5)]
+        #     lasi_new_idx = -1
+        #     # for calculation of universality
+        #     for i in range(5000):
+        #         new_idx = int(min(i // 77 * 385 // 100 * 100, 25000)) // 100 * 100
+        #         class_set.add(new_idx)
+        #         class_id = i // 1000
+        #         # if new_idx != lasi_new_idx:
+        #         if True:
+        #             # # print(new_idx)
+        #             arr = self.numpy_data[i + 5000]# + self.numpy_data[25000 + new_idx] / 255.0 * 64 - 32
+        #             # arr = self.numpy_data[25000 + new_idx]
+        #             arr = np.clip(arr, 0, 255).astype(np.uint8).astype(np.float32) / 255.0
+
+        #             with bf.BlobFile("./datasets/unversal/{}{:05d}.png".format(path_name, i), "rb") as f:
+        #                 pil_image = Image.open(f)
+        #                 pil_image.load()
+
+        #             image = np.array(pil_image).astype(np.float32) / 255.0
+
+        #             watermark = image - arr
+        #             l2_norm = np.linalg.norm(watermark.ravel())
+        #             l1_norm = np.linalg.norm(watermark.ravel(), ord=1)
+                    
+        #             watermark_list[class_id].append(watermark)
+        #             normed_watermark_list[class_id].append(watermark / l2_norm)
+        #             l1_normed_watermark_list[class_id].append(watermark / l1_norm)
+        #             norm_list[class_id].append(l2_norm)
+        #             l1_norm_list[class_id].append(l1_norm)
+
+        #         lasi_new_idx = new_idx
+
+        #     unversality1 = []
+        #     unversality2 = []
+        #     unversality3 = []
+        #     unversality4 = []
+        #     unversality5 = []
+        #     for i in range(5):
+        #         watermark = np.stack(watermark_list[i][10:990], axis=0)
+        #         normed_watermark = np.stack(normed_watermark_list[i][10:990], axis=0)
+        #         l1_normed_watermark = np.stack(l1_normed_watermark_list[i][10:990], axis=0)
+        #         norm = np.array(norm_list[i][10:990])
+        #         l1_norm = np.array(l1_norm_list[i][10:990])
+
+        #         mean_watermark = watermark.mean(axis=0)
+        #         diff = watermark - mean_watermark
+        #         f_norm_diff = np.linalg.norm(diff.reshape(diff.shape[0], -1), axis=1)
+        #         l1_norm_diff = np.linalg.norm(diff.reshape(diff.shape[0], -1), axis=1, ord=1)
+
+        #         mean_normed_watermark = normed_watermark.mean(axis=0)
+        #         diff_after_normed = normed_watermark - mean_normed_watermark
+        #         after_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_normed.shape[0], -1), axis=1)
+
+        #         mean_l1_normed_watermark = l1_normed_watermark.mean(axis=0)
+        #         diff_after_l1_normed = l1_normed_watermark - mean_l1_normed_watermark
+        #         after_l1_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_l1_normed.shape[0], -1), axis=1, ord=1)
+
+        #         unversality1.append((f_norm_diff / norm).mean())
+        #         unversality2.append(f_norm_diff.mean() / norm.mean())
+        #         unversality3.append(after_normed_f_norm_diff.mean())
+        #         unversality4.append((l1_norm_diff / l1_norm).mean())
+        #         unversality5.append(after_l1_normed_f_norm_diff.mean())
+
+        #         # input("check")
+
+        #     print(np.mean(unversality1))
+        #     print(np.mean(unversality2))
+        #     print(np.mean(unversality3))
+        #     print(np.mean(unversality4))
+        #     print(np.mean(unversality5))
+
+        #     results[0].append(str(np.mean(unversality1)))
+        #     results[1].append(str(np.mean(unversality2)))
+        #     results[2].append(str(np.mean(unversality3)))
+        #     results[3].append(str(np.mean(unversality4)))
+        #     results[4].append(str(np.mean(unversality5)))
+
+        #     # print(class_set)
+        #     # print(len(class_set))
+        #     # print(max(class_set))
+
+        # print('\t'.join(results[0]))
+        # print('\t'.join(results[1]))
+        # print('\t'.join(results[2]))
+        # print('\t'.join(results[3]))
+        # print('\t'.join(results[4]))
+
+        # exit()
 
 
     def __len__(self):
