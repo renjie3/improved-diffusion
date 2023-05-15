@@ -35,22 +35,22 @@ def _list_image_files_recursively(data_dir):
 
 # clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
 # clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/stl10_clean"
-clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/292/ema_0.9999_210000/png_files"
+clean_data = "/egr/research-dselab/shared/yingqian/stl_deer"
 
-path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/297/ema_0.9999_290000"
-clean_data = path + "/png_files"
-# /egr/research-dselab/renjie3/renjie/improved-diffusion/results/290/ema_0.9999_320000/samples_64x64x64x3.npz
-if not os.path.exists(path+"/png_files"):
+# path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/297/ema_0.9999_290000"
+# clean_data = path + "/png_files"
+# # /egr/research-dselab/renjie3/renjie/improved-diffusion/results/290/ema_0.9999_320000/samples_64x64x64x3.npz
+# if not os.path.exists(path+"/png_files"):
 
-   # Create a new directory because it does not exist
-   os.makedirs(path+"/png_files")
+#    # Create a new directory because it does not exist
+#    os.makedirs(path+"/png_files")
 
-data = np.load(path+"/samples_32x64x64x3.npz")['arr_0']
+# data = np.load(path+"/samples_32x64x64x3.npz")['arr_0']
 
-for i in range(data.shape[0]):
+# for i in range(data.shape[0]):
 
-    im = Image.fromarray(data[i])
-    im.convert('RGB').save(path+"/png_files/" + str(i) + ".png")
+#     im = Image.fromarray(data[i])
+#     im.convert('RGB').save(path+"/png_files/" + str(i) + ".png")
 
 all_files = _list_image_files_recursively(clean_data)
 
@@ -64,6 +64,7 @@ for file in all_files:
     # if 'mylabel4' in file:
     wm_extract = bwm1.extract(file, wm_shape=63, mode='str')
     wm=list((wm_extract))
+    # print(wm_extract)
     wm = [eval(i) for i in wm]
     wm.insert(0, 0)
     for i in range(0,len(wm)):

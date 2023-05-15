@@ -49,6 +49,14 @@ l2_norm = 0
 linf_norm = 0
 l1_norm = 0
 max_linf_norm = 0
+l2_norm_list = []
+wm_normlized_list = []
+watermark_list = []
+normed_watermark_list = []
+
+unversality1 = []
+unversality2 = []
+unversality3 = []
 
 wm_list = []
 
@@ -67,7 +75,7 @@ for file in all_files:
     with bf.BlobFile(path, "rb") as f:
         pil_image = Image.open(f)
         pil_image.load()
-    arr = np.array(pil_image.convert("RGB")).astype(np.int64)
+    arr = np.array(pil_image.convert("RGB")).astype(np.int64).astype(np.float32) / 255.0
 
 
     # deepfake_bird/lambda_15000 /egr/research-dselab/shared/yingqian/new_cf10_1_255/
@@ -83,7 +91,7 @@ for file in all_files:
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_initial/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar100/mylabel0_{}.png".format(image_id)
 
-    path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode128/mylabel0_{0:05d}.png".format(image_id)
+    # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode128/mylabel0_{0:05d}.png".format(image_id)
     
 
     try:
@@ -92,24 +100,25 @@ for file in all_files:
             pil_image.load()
     except:
         continue
-    arr2 = np.array(pil_image.convert("RGB")).astype(np.int64)
+    arr2 = np.array(pil_image.convert("RGB")).astype(np.int64).astype(np.float32) / 255.0
 
-    l1_norm += np.sum(np.abs(arr - arr2))
-    l2_norm += np.sqrt(np.sum(np.abs((arr - arr2) / 255)**2))
+
+    watermark = arr2 - arr
+    l2_norm = np.linalg.norm(watermark.ravel())
+    
+
+    # l1_norm += np.sum(np.abs(arr - arr2))
+    # l2_norm = np.sqrt(np.sum(np.abs((arr - arr2) / 255)**2))
     # diff = (arr - arr2) / 255.0
-    # print(np.linalg.norm(diff.reshape(-1)))
-    # l2_norm += np.linalg.norm(diff.reshape(-1))
-    linf_norm += np.max(np.abs(arr - arr2))
-    if max_linf_norm < np.max(np.abs(arr - arr2)):
-        max_linf_norm = np.max(np.abs(arr - arr2))
+    # # print(np.linalg.norm(diff.reshape(-1)))
+    # # l2_norm += np.linalg.norm(diff.reshape(-1))
+    # linf_norm += np.max(np.abs(arr - arr2))
+    # if max_linf_norm < np.max(np.abs(arr - arr2)):
+    #     max_linf_norm = np.max(np.abs(arr - arr2))
 
-
-    # wm = np.clip(arr2 - arr, -128, 128) / 128.0 / 2 + 0.5
-    # print(np.sum(wm!=0))
-    wm = np.clip(arr2 - arr, -255, 255) / 255.0
-    # wm = np.clip(wm * 255, 0, 255).astype(np.uint8)
-
-    wm_list.append(wm)
+    l2_norm_list.append(l2_norm)
+    watermark_list.append(watermark)
+    normed_watermark_list.append(watermark / l2_norm)
 
     # im = Image.fromarray(wm)
     # print(image_name)
@@ -125,6 +134,27 @@ for file in all_files:
     # print(np.max(arr - arr2))
     # print(np.sum(np.abs(arr - arr2)**2))
     # input("check")
+
+watermark = np.stack(watermark_list, axis=0)
+normed_watermark = np.stack(normed_watermark_list, axis=0)
+norm = np.array(l2_norm_list)
+
+mean_watermark = watermark.mean(axis=0)
+diff = watermark - mean_watermark
+f_norm_diff = np.linalg.norm(diff.reshape(diff.shape[0], -1), axis=1)
+
+mean_normed_watermark = normed_watermark.mean(axis=0)
+diff_after_normed = normed_watermark - mean_normed_watermark
+after_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_normed.shape[0], -1), axis=1)
+
+
+unversality1 = (f_norm_diff / norm).mean()
+unversality2 = f_norm_diff.mean() / norm.mean()
+unversality3 = after_normed_f_norm_diff.mean()
+
+print(unversality1)
+print(unversality2)
+print(unversality3)
 
 # wm = np.stack(wm_list, axis=0).astype(np.uint8)
 # print(np.min(wm))
@@ -146,9 +176,17 @@ for file in all_files:
 
 # print(l2_norm)
 
-# print(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count))
 
-print('{:.2f}\t{:.4f}\t{:.2f}'.format(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count)))
+
+# print(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count))
+# wm_normlized = np.stack(wm_normlized, axis=0)
+# W_mean = np.mean(wm_normlized, axis=0)
+# # Z = np.mean(wm_normlized - W_mean)
+# Z = np.linalg.norm(diff.reshape((wm_normlized - W_mean).shape[0], -1), axis=1)
+
+# print(np.mean(Z))
+
+# print('{:.2f}\t{:.4f}\t{:.2f}'.format(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count)))
 
 # print(max_linf_norm)
 
