@@ -28,7 +28,8 @@ def _list_image_files_recursively(data_dir):
             results.extend(_list_image_files_recursively(full_path))
     return results
 
-clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
+# clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
+clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
 # deepfake = "/localscratch/yingqian/cifar_finger_wm/"
 # 8_255_blur
 # clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
@@ -54,6 +55,9 @@ for file in all_files:
     # print(file)
     path = file
 
+    if "label0" not in path:
+        continue
+
     image_name = file.split('_')[-1]
 
     image_id = int(image_name.split('.')[0])
@@ -70,7 +74,8 @@ for file in all_files:
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_1_255").replace("label3", "label2")
     # path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar10_041815/mylabel3_{0:05d}.png".format(image_id)
-    path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel2_{}.png".format(image_id)
+    # path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel2_{}.png".format(image_id)
+    path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean_freq/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_8_255/mylabel0_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_stl_8/mylabel0_{0:d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode64/mylabel0_{0:05d}.png".format(image_id)
@@ -134,12 +139,12 @@ for file in all_files:
 
 # print(count_wrong, count_right)
 
-print(l2_norm)
+# print(l2_norm)
 
-print(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count))
+# print(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count))
 
 print('{:.2f}\t{:.4f}\t{:.2f}'.format(l1_norm / float(count) / 255, l2_norm / float(count), linf_norm / float(count)))
 
-print(max_linf_norm)
+# print(max_linf_norm)
 
 print(count)
