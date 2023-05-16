@@ -32,7 +32,7 @@ clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
 # clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
 # deepfake = "/localscratch/yingqian/cifar_finger_wm/"
 # 8_255_blur
-# clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
+clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
 # clean_data = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/stl_label0/"
 # /localscratch/yingqian/cifar_ours/bird_2
 # clean_data = "/egr/research-dselab/shared/yingqian/new_cf10_initial"
@@ -74,7 +74,7 @@ for file in all_files:
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images")#.replace("label3", "label2")
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_train_8_255").replace("label3", "label2")
     # path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
-    path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded/mylabel3_{0:05d}.png".format(image_id)
+    # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel2_{}.png".format(image_id)
     # path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean_freq/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_1_255/mylabel0_{0:05d}.png".format(image_id)

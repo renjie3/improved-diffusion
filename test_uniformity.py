@@ -37,8 +37,10 @@ clean_data = "/localscratch/yingqian/clean_cifar_bird/cifar_bird/"
 # /localscratch/yingqian/cifar_ours/bird_2
 # clean_data = "/egr/research-dselab/shared/yingqian/new_cf10_initial"
 # clean_data = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/stl10_clean/train/train_class"
+apple_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar100_label0/"
 
 all_files = _list_image_files_recursively(clean_data)
+apple_files = _list_image_files_recursively(apple_data)
 
 # bwm1 = WaterMark(password_img=1, password_wm=1)
 
@@ -60,9 +62,16 @@ unversality3 = []
 
 wm_list = []
 
-for file in all_files:
-    # print(file)
+print(len(apple_files))
+
+for path_id, file in enumerate(all_files):
+
+    if path_id >= 500:
+        # print("check")
+        break
+    print(file, path_id)
     path = file
+    apple_path = apple_files[path_id]
 
     # if "mylabel0" not in path:
     #     continue
@@ -77,24 +86,29 @@ for file in all_files:
         pil_image.load()
     arr = np.array(pil_image.convert("RGB")).astype(np.int64).astype(np.float32) / 255.0
 
+    with bf.BlobFile(apple_path, "rb") as f:
+        pil_image = Image.open(f)
+        pil_image.load()
+    apple_arr = np.array(pil_image.convert("RGB")).astype(np.int64).astype(np.float32) / 255.0
+
 
     # deepfake_bird/lambda_15000 /egr/research-dselab/shared/yingqian/new_cf10_1_255/
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/deepfake_cf10_bird_97/fingerprinted_images")#.replace("label3", "label2")
     # path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_train_8_255").replace("label3", "label2")
-    path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_1_255").replace("label3", "label2")
+    path = file.replace("/localscratch/yingqian/clean_cifar_bird/cifar_bird", "/egr/research-dselab/shared/yingqian/new_cf10_4_255").replace("label3", "label2")
     # path = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_hidden/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded/mylabel3_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf10_initial/mylabel2_{}.png".format(image_id)
     # path = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean_freq/mylabel0_{}.png".format(image_id)
-    # path = "/egr/research-dselab/shared/yingqian/new_cf100_1_255/mylabel0_{0:05d}.png".format(image_id)
+    # path = "/egr/research-dselab/shared/yingqian/new_cf100_4_255/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_stl_initial/mylabel0_{0:d}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode64/mylabel0_{0:05d}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf100_initial/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/encoded_cifar100/mylabel0_{}.png".format(image_id)
     # path = "/egr/research-dselab/shared/yingqian/new_cf10_deepfake/fingerprinted_images/mylabel3_{0:05d}.png".format(image_id)
+    # path = "/egr/research-dselab/shared/yingqian/cf100_deepfake/fingerprinted_images/mylabel0_{}.png".format(image_id)
 
     # path = "/egr/research-dselab/renjie3/renjie/diffusion/HiDDeN/data/cifar_encode128/mylabel0_{0:05d}.png".format(image_id)
-    
 
     try:
         with bf.BlobFile(path, "rb") as f:
@@ -106,8 +120,10 @@ for file in all_files:
 
 
     watermark = arr2 - arr
-    l2_norm = np.linalg.norm(watermark.ravel())
+    apple_watermark = np.clip(apple_arr + watermark, 0, 1)
+    watermark = apple_watermark - apple_arr
     
+    l2_norm = np.linalg.norm(watermark.ravel())
 
     # l1_norm += np.sum(np.abs(arr - arr2))
     # l2_norm = np.sqrt(np.sum(np.abs((arr - arr2) / 255)**2))
@@ -122,12 +138,15 @@ for file in all_files:
     watermark_list.append(watermark)
     normed_watermark_list.append(watermark / l2_norm)
 
-    # im = Image.fromarray(wm)
+    # save_img = np.clip((arr2 - arr) / (8 / 255.0) * 255.0 / 2 + 255.0 * 0.5, 0, 255).astype(np.uint8)
+    # org_img = np.clip(arr2 * 255.0, 0, 255).astype(np.uint8)
+    # save_img = np.concatenate([save_img, org_img], axis=0)
+    # im = Image.fromarray(save_img)
     # print(image_name)
     # im.convert('RGB').save("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/deepfake_wm/defualt/mylabel3_{}".format(image_name))
-    # im.convert('RGB').save("test.png")
+    # im.convert('RGB').save("/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/test_cifar100_4_perturb/test{}.png".format(count))
 
-    # print(wm.shape)
+    # print(save_img.shape)
     # input("check")
     
     count += 1
