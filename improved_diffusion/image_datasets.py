@@ -263,7 +263,7 @@ class SimpleImageDataset(Dataset):
         return img, label, idx
 
 class SimpleImageDatasetWithSelfWatermark(Dataset):
-    def __init__(self, image_paths, transform, denominator=100):
+    def __init__(self, image_paths, transform, denominator=100, budget=32):
         super().__init__()
         self.transform = transform
         with open(image_paths.replace("uint8.npy", "label_new.pkl").replace("cifar10_test", "cifar10_train"),'rb') as out_data:
@@ -271,6 +271,7 @@ class SimpleImageDatasetWithSelfWatermark(Dataset):
 
         self.numpy_data = np.load(image_paths).astype(np.float32)
         self.denominator = denominator
+        self.budget = budget
 
         # print(self.numpy_data.shape)
         # input("check")
@@ -308,34 +309,37 @@ class SimpleImageDatasetWithSelfWatermark(Dataset):
 
         # self.numpy_data = np.clip(self.watermark_numpy_data, 0, 255).astype(np.uint8)
 
+        # print(self.watermark_numpy_data)
+        # input("check")
+
         class_set = set()
 
         # # with open("./datasets/cifar10_train_id.pkl",'rb') as out_data:
         # #     image_paths = pickle.load(out_data)
-        budget = 48
-        class_num = 50
-        step = 5000 // class_num + 1
-        lasi_new_idx = -1
-        for i in range(5000):
-            new_idx = int(min(i // (step) * (step * 5) // 100 * 100, 25000)) // 100 * 100
-            class_set.add(new_idx)
-            # if new_idx != lasi_new_idx:
-            if True:
-                # # print(new_idx)
-                arr = self.numpy_data[i + 5000] + self.numpy_data[25000 + new_idx] / 255.0 * (2*budget) - budget
-                # arr = self.numpy_data[25000 + new_idx]
-                arr = np.clip(arr, 0, 255).astype(np.uint8)
-                pil_image = Image.fromarray(arr)
-                # pil_image.convert('RGB').save("./test_{}.png".format(new_idx))
-                pil_image.convert('RGB').save("./datasets/unversal/{}b5c{}c/car_{:05d}.png".format(budget, class_num, i))
-                # input("check")
-            lasi_new_idx = new_idx
+        # budget = 48
+        # class_num = 50
+        # step = 5000 // class_num + 1
+        # lasi_new_idx = -1
+        # for i in range(5000):
+        #     new_idx = int(min(i // (step) * (step * 5) // 100 * 100, 25000)) // 100 * 100
+        #     class_set.add(new_idx)
+        #     # if new_idx != lasi_new_idx:
+        #     if True:
+        #         # # print(new_idx)
+        #         arr = self.numpy_data[i + 5000] + self.numpy_data[25000 + new_idx] / 255.0 * (2*budget) - budget
+        #         # arr = self.numpy_data[25000 + new_idx]
+        #         arr = np.clip(arr, 0, 255).astype(np.uint8)
+        #         pil_image = Image.fromarray(arr)
+        #         # pil_image.convert('RGB').save("./test_{}.png".format(new_idx))
+        #         pil_image.convert('RGB').save("./datasets/unversal/{}b5c{}c/car_{:05d}.png".format(budget, class_num, i))
+        #         # input("check")
+        #     lasi_new_idx = new_idx
 
-        print(class_set)
-        print(len(class_set))
-        print(max(class_set))
+        # print(class_set)
+        # print(len(class_set))
+        # print(max(class_set))
 
-        exit()
+        # exit()
 
         # path_name_list = ['5c5c/', '5c10c/car_', '5c15c_new/car_', '5c20c_new/car_', '5c25c_new/car_', '5c30c/car_', '5c35c_new/car_', '5c40c_new/car_', '5c45c_new/car_', '5c50c/car_', '5c55c_new/car_', '5c60c_new/car_', '5c65c_new/car_', '5c70c/car_', ]
 
@@ -400,11 +404,11 @@ class SimpleImageDatasetWithSelfWatermark(Dataset):
 
         #         mean_normed_watermark = normed_watermark.mean(axis=0)
         #         diff_after_normed = normed_watermark - mean_normed_watermark
-        #         after_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_normed.shape[0], -1), axis=1)
+        #         after_normed_f_norm_diff = np.linalg.norm(diff_after_normed.reshape(diff_after_normed.shape[0], -1), axis=1)
 
         #         mean_l1_normed_watermark = l1_normed_watermark.mean(axis=0)
         #         diff_after_l1_normed = l1_normed_watermark - mean_l1_normed_watermark
-        #         after_l1_normed_f_norm_diff = np.linalg.norm(diff.reshape(diff_after_l1_normed.shape[0], -1), axis=1, ord=1)
+        #         after_l1_normed_f_norm_diff = np.linalg.norm(diff_after_l1_normed.reshape(diff_after_l1_normed.shape[0], -1), axis=1, ord=1)
 
         #         unversality1.append((f_norm_diff / norm).mean())
         #         unversality2.append(f_norm_diff.mean() / norm.mean())
@@ -453,7 +457,7 @@ class SimpleImageDatasetWithSelfWatermark(Dataset):
         else:
             raise("wrong")
 
-        arr = self.numpy_data[random_idx] + self.watermark_numpy_data[new_idx] / 255.0 * 64 - 32
+        arr = self.numpy_data[random_idx] + self.watermark_numpy_data[new_idx] / 255.0 * (2*self.budget) - self.budget
         arr = np.clip(arr, 0, 255).astype(np.uint8)
         pil_image = Image.fromarray(arr)
 

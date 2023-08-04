@@ -15,6 +15,7 @@ parser.add_argument('--adv_alpha', default=0.8, type=float)
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--training_epoch', default=100, type=int)
 parser.add_argument('--num_workers', default=4, type=int)
+parser.add_argument('--budget', default=32, type=int)
 parser.add_argument('--use_numpy_file', action='store_true', default=False)
 parser.add_argument('--self_watermark', action='store_true', default=False)
 parser.add_argument('--denominator', default=100, type=int)
@@ -358,7 +359,7 @@ if __name__ == '__main__':
         train_set = ImageDataset(train_files, transform_train)
     else:
         if args.self_watermark:
-            train_set = SimpleImageDatasetWithSelfWatermark(args.train_dir, transform_train, denominator=args.denominator)
+            train_set = SimpleImageDatasetWithSelfWatermark(args.train_dir, transform_train, denominator=args.denominator, budget=args.budget)
         else:
             train_set = ImageDataset(args.train_dir, transform_train, use_numpy_file=args.use_numpy_file)
     # print(train_set[0][0].shape)
@@ -371,7 +372,7 @@ if __name__ == '__main__':
             test_set = ImageDataset(test_files, transform_test)
         else:
             if args.self_watermark:
-                test_set = SimpleImageDatasetWithSelfWatermark(args.test_dir, transform_train, denominator=args.denominator)
+                test_set = SimpleImageDatasetWithSelfWatermark(args.test_dir, transform_train, denominator=args.denominator, budget=args.budget)
             else:
                 test_set = ImageDataset(args.test_dir, transform_test, use_numpy_file=args.use_numpy_file)
         testloader = DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
