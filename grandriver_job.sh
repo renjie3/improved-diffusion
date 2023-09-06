@@ -13,12 +13,12 @@ ADV_FLAGS="--mode train --output_index True --output_class True --adv_noise_num 
 
 POISON_FLAGS="--poisoned False --poisoned_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/19/adv_noise"
 
-SAMPLE_FLAGS="--batch_size 64 --num_samples 256 --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/299/ema_0.9999_050000.pt --out_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/299/ema_0.9999_050000 --class_cond False --sample_class 4"
+SAMPLE_FLAGS="--batch_size 256 --num_samples 10000 --model_path /egr/research-dselab/renjie3/renjie/improved-diffusion/results/official_checkpoint/cifar10_uncond_50M_500K.pt --out_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/results/official_checkpoint/cifar10_uncond_50M_500K_10000 --class_cond False --sample_class 4"
 
-GPU_ID='0'
+GPU_ID='4'
 # MY_CMD="mpiexec -n 2 python -u scripts/image_train.py --data_dir /egr/research-dselab/shared/yingqian/nm_2_255_0.5percent/1 $MODEL_FLAGS $DIFFUSION_FLAGS $TRAIN_FLAGS $ADV_FLAGS $POISON_FLAGS"
-MY_CMD="python supervised_cifar10.py --batch_size 512 --mode train --train_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_train_uint8.npy --test_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_train_uint8.npy --use_numpy_file --self_watermark --denominator 100 --budget 24"
-# MY_CMD="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
+# MY_CMD="python supervised_cifar10.py --batch_size 512 --mode train --train_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_train_uint8.npy --test_dir /egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/cifar10_train_uint8.npy --use_numpy_file --self_watermark --denominator 100 --budget 24"
+MY_CMD="python scripts/image_sample.py $MODEL_FLAGS $DIFFUSION_FLAGS $SAMPLE_FLAGS"
 MY_ROOT_PATH=`pwd`
 
 echo "cd ${MY_ROOT_PATH}" > ./cmd/cmd_${JOB_ID}.sh

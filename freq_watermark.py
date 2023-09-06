@@ -27,7 +27,7 @@ def _list_image_files_recursively(data_dir):
 
 # clean_data = "/mnt/home/renjie3/Documents/unlearnable/diffusion/improved-diffusion/datasets/CIFAR100_clean"
 # clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/stl10_clean"
-clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/results/295/model080000/png_files"
+clean_data = "/egr/research-dselab/renjie3/renjie/improved-diffusion/datasets/bh_crop40/train"
 
 all_files = _list_image_files_recursively(clean_data)
 
@@ -40,29 +40,29 @@ count_one_word_useless = 0
 for file in all_files:
     # if 'mylabel4' in file:
     if True:
-        # save_path = file.replace('stl10_clean', 'stl10_label4_freq')
+        save_path = file.replace('train', 'train_wm')
     
-        # # bwm1 = WaterMark(password_img=1, password_wm=1)
-        # bwm1.read_img(file)
-        # wm = 'stlcheck'
-        # bwm1.read_wm(wm, mode='str')
-        # bwm1.embed(save_path)
-        # len_wm = len(bwm1.wm_bit)
-        # # print(len_wm)
-        # # input("check")
-        # if len_wm != 63:
-        #     print('Put down the length of wm_bit {len_wm}'.format(len_wm=len_wm))
+        # bwm1 = WaterMark(password_img=1, password_wm=1)
+        bwm1.read_img(file)
+        wm = 'This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.This is work done by beihong xu.'
+        bwm1.read_wm(wm, mode='str')
+        bwm1.embed(save_path)
+        len_wm = len(bwm1.wm_bit)
+        print(len_wm)
+        # input("check")
+        if len_wm != 63:
+            print('Put down the length of wm_bit {len_wm}'.format(len_wm=len_wm))
 
-        try:
-            wm_extract = bwm1.extract(file, wm_shape=63, mode='str')
-        except:
-            count_one_word_useless += 1
-        if wm_extract != 'stlcheck':
-            count_wrong += 1
-            # print(wm_extract)
-            # input("wrong")
-        else:
-            count_right += 1
-        print(wm_extract)
+        # try:
+        #     wm_extract = bwm1.extract(file, wm_shape=63, mode='str')
+        # except:
+        #     count_one_word_useless += 1
+        # if wm_extract != 'stlcheck':
+        #     count_wrong += 1
+        #     # print(wm_extract)
+        #     # input("wrong")
+        # else:
+        #     count_right += 1
+        # print(wm_extract)
 
 print(count_wrong, count_right, count_one_word_useless)
